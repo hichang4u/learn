@@ -1,0 +1,313 @@
+{% extends "layout/app.html" %}
+
+{% block title %}신청 관리{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">신청 관리</h2>
+        <div class="d-flex gap-2">
+            <select class="form-select" id="statusFilter">
+                <option value="">전체 상태</option>
+                <option value="PENDING">대기중</option>
+                <option value="APPROVED">승인됨</option>
+                <option value="REJECTED">거절됨</option>
+                <option value="IN_USE">사용중</option>
+                <option value="COMPLETED">완료됨</option>
+                <option value="CANCELLED">취소됨</option>
+            </select>
+            <button class="btn btn-outline-secondary" onclick="refreshList()">
+                <i class="fas fa-sync-alt"></i>
+                새로고침
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>신청자</th>
+                            <th>플랫폼</th>
+                            <th>계정</th>
+                            <th>시작일</th>
+                            <th>종료일</th>
+                            <th>상태</th>
+                            <th>메모</th>
+                            <th>신청일</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationTableBody">
+                        <!-- 예약 목록이 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 상태 변경 모달 -->
+<div class="modal fade" id="statusChangeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">신청 처리</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="reservationId">
+                    <div class="mb-3" id="passwordField" style="display: none;">
+                        <label class="form-label">계정 비밀번호 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="accountPassword" placeholder="승인 시 계정 비밀번호를 입력하세요">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">메모</label>
+                        <textarea class="form-control" id="statusMemo" rows="3" placeholder="처리 사유나 메모를 입력하세요"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-success" onclick="approveReservation()">승인</button>
+                <button type="button" class="btn btn-danger" onclick="rejectReservation()">거절</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 0.25rem;
+}
+
+.status-PENDING {
+    background-color: var(--bs-warning);
+    color: var(--bs-dark);
+}
+
+.status-APPROVED {
+    background-color: var(--bs-info);
+    color: var(--bs-white);
+}
+
+.status-IN_USE {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+}
+
+.status-COMPLETED {
+    background-color: var(--bs-success);
+    color: var(--bs-white);
+}
+
+.status-REJECTED {
+    background-color: var(--bs-danger);
+    color: var(--bs-white);
+}
+
+.status-CANCELLED {
+    background-color: var(--bs-secondary);
+    color: var(--bs-white);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+</style>
+
+<script>
+// 전역 변수 선언
+let selectedReservationId = null;
+let statusChangeModal = null;
+
+// 페이지 초기화
+function initializePage() {
+    // 모달 초기화
+    statusChangeModal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+    
+    // 상태 필터 이벤트 리스너 등록
+    document.getElementById('statusFilter').addEventListener('change', loadReservations);
+    
+    // 초기 데이터 로드
+    loadReservations();
+}
+
+// 상태별 한글 텍스트
+const statusText = {
+    'PENDING': '대기중',
+    'APPROVED': '승인됨',
+    'IN_USE': '사용중',
+    'COMPLETED': '완료',
+    'REJECTED': '거절됨',
+    'CANCELLED': '취소됨'
+};
+
+// 예약 목록 로드
+async function loadReservations() {
+    try {
+        const status = document.getElementById('statusFilter').value;
+        const url = `/api/admin/reservations${status ? `?status=${status}` : ''}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reservations = await response.json();
+        const tableBody = document.getElementById('reservationTableBody');
+        
+        if (reservations.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <p class="text-muted mb-0">신청 내역이 없습니다.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = reservations.map(reservation => `
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <span class="fw-medium">${reservation.user.full_name}</span>
+                        <span class="badge bg-secondary">${reservation.user.position_value || ''}</span>
+                    </div>
+                    <div class="small text-muted">${reservation.user.email}</div>
+                </td>
+                <td>
+                    <div class="platform-info">
+                        <img src="${reservation.account.platform.logo || '/static/img/default-platform.png'}" 
+                             alt="${reservation.account.platform.name}"
+                             class="platform-logo">
+                        <span>${reservation.account.platform.name}</span>
+                    </div>
+                </td>
+                <td>${reservation.account.email}</td>
+                <td>${new Date(reservation.start_date).toLocaleDateString()}</td>
+                <td>${new Date(reservation.end_date).toLocaleDateString()}</td>
+                <td>
+                    <span class="status-badge status-${reservation.status}">
+                        ${statusText[reservation.status]}
+                    </span>
+                </td>
+                <td>
+                    <span class="text-muted small">
+                        ${reservation.memo || '-'}
+                    </span>
+                </td>
+                <td>
+                    <span class="text-muted small">
+                        ${new Date(reservation.created_at).toLocaleString()}
+                    </span>
+                </td>
+                <td>
+                    ${reservation.status === 'PENDING' ? `
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="showStatusModal(${reservation.id})">
+                            처리하기
+                        </button>
+                    ` : '-'}
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('예약 목록 로드 실패:', error);
+        if (error.message.includes('401')) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            window.location.href = '/login';
+        } else {
+            alert('예약 목록을 불러오는데 실패했습니다.');
+        }
+    }
+}
+
+// 상태 변경 모달 표시
+function showStatusModal(reservationId) {
+    selectedReservationId = reservationId;
+    document.getElementById('reservationId').value = reservationId;
+    document.getElementById('statusMemo').value = '';
+    document.getElementById('accountPassword').value = '';
+    document.getElementById('passwordField').style.display = 'block';
+    statusChangeModal.show();
+}
+
+// 승인 처리
+async function approveReservation() {
+    const passwordField = document.getElementById('accountPassword');
+    if (!passwordField.value.trim()) {
+        alert('계정 비밀번호를 입력해주세요.');
+        passwordField.focus();
+        return;
+    }
+    await updateStatus('APPROVED');
+}
+
+// 거절 처리
+async function rejectReservation() {
+    await updateStatus('REJECTED');
+}
+
+// 상태 업데이트
+async function updateStatus(newStatus) {
+    const memo = document.getElementById('statusMemo').value;
+    const accountPassword = document.getElementById('accountPassword').value;
+    
+    try {
+        const response = await fetch(`/api/admin/reservations/${selectedReservationId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: newStatus,
+                memo: memo || null,
+                account_password: newStatus === 'APPROVED' ? accountPassword : null
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        statusChangeModal.hide();
+        await loadReservations();
+        alert(newStatus === 'APPROVED' ? '승인되었습니다.' : '거절되었습니다.');
+    } catch (error) {
+        console.error('상태 변경 실패:', error);
+        alert(`상태 변경에 실패했습니다: ${error.message}`);
+    }
+}
+
+// 목록 새로고침
+function refreshList() {
+    loadReservations();
+}
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', initializePage);
+</script>
+{% endblock %} 

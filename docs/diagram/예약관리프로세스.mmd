@@ -1,0 +1,28 @@
+flowchart TD
+    A[예약 시작] --> B[예약 요청]
+    B --> C{계정 사용 가능?}
+    
+    C -->|No| D[예약 불가]
+    D --> Z[종료]
+    
+    C -->|Yes| E{중복 예약 있음?}
+    E -->|Yes| D
+    
+    E -->|No| F[예약 생성<br/>상태: PENDING]
+    
+    F --> G{관리자 승인?}
+    G -->|No| H[예약 취소<br/>상태: CANCELLED]
+    H --> Z
+    
+    G -->|Yes| I[예약 승인<br/>상태: APPROVED]
+    
+    I --> J{사용 시작?}
+    J -->|No| H
+    
+    J -->|Yes| K[사용 중<br/>상태: IN_USE]
+    
+    K --> L{반납?}
+    L -->|Yes| M[반납 완료<br/>상태: RETURNED]
+    M --> Z
+    
+    L -->|No| K

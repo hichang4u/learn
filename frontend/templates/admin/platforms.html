@@ -1,0 +1,154 @@
+{% extends "layout/app.html" %}
+
+{% block title %}플랫폼 관리{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">플랫폼 관리</h1>
+        <button class="btn btn-primary" onclick="openAddPlatformModal()">
+            <i class="fas fa-plus"></i> 플랫폼 추가
+        </button>
+    </div>
+
+    <div class="row g-4" id="platformList">
+        <!-- 플랫폼 카드가 여기에 동적으로 추가됩니다 -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// CSRF 토큰 가져오기
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// API 호출 공통 옵션
+const apiOptions = {
+    credentials: 'include',  // 쿠키 포함
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+    }
+};
+
+// 플랫폼 목록을 불러오는 함수
+async function loadPlatforms() {
+    try {
+        const response = await fetch('/api/platforms/', {
+            method: 'GET',
+            ...apiOptions
+        });
+        
+        if (response.ok) {
+            const platforms = await response.json();
+            renderPlatforms(platforms);
+        } else if (response.status === 401) {
+            // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+            window.location.href = '/login';
+        } else {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('플랫폼 목록 로드 실패:', error);
+        alert('플랫폼 목록을 불러오는데 실패했습니다.');
+    }
+}
+
+// 플랫폼 목록을 렌더링하는 함수
+function renderPlatforms(platforms) {
+    const platformList = document.getElementById('platformList');
+    platformList.innerHTML = platforms.map(platform => `
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="${platform.logo || '/static/images/default-platform.png'}" 
+                             alt="${platform.name}" 
+                             class="me-3"
+                             style="width: 48px; height: 48px; object-fit: contain;">
+                        <h5 class="card-title mb-0">${platform.name}</h5>
+                    </div>
+                    <p class="card-text text-muted small mb-2">
+                        <i class="fas fa-link"></i> 
+                        <a href="${platform.url}" target="_blank" class="text-decoration-none">${platform.url}</a>
+                    </p>
+                    <p class="card-text mb-3">${platform.description || '설명이 없습니다.'}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge ${platform.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${platform.is_active ? '활성' : '비활성'}
+                        </span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editPlatform(${platform.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePlatform(${platform.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted small">
+                    <div>생성: ${new Date(platform.created_at).toLocaleString()}</div>
+                    <div>수정: ${new Date(platform.updated_at).toLocaleString()}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 플랫폼 추가 모달 열기
+function openAddPlatformModal() {
+    // TODO: 플랫폼 추가 모달 구현
+    alert('플랫폼 추가 기능은 준비 중입니다.');
+}
+
+// 플랫폼 수정
+function editPlatform(id) {
+    // TODO: 플랫폼 수정 기능 구현
+    alert('플랫폼 수정 기능은 준비 중입니다.');
+}
+
+// 플랫폼 삭제
+async function deletePlatform(id) {
+    if (!confirm('정말 이 플랫폼을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/platforms/${id}`, {
+            method: 'DELETE',
+            ...apiOptions
+        });
+        
+        if (response.ok) {
+            loadPlatforms(); // 목록 새로고침
+        } else if (response.status === 401) {
+            window.location.href = '/login';
+        } else {
+            alert('플랫폼 삭제에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('플랫폼 삭제 실패:', error);
+        alert('플랫폼 삭제 중 오류가 발생했습니다.');
+    }
+}
+
+// 페이지 로드 시 플랫폼 목록 불러오기
+document.addEventListener('DOMContentLoaded', loadPlatforms);
+</script>
+{% endblock %} 

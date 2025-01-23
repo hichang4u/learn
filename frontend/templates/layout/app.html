@@ -1,0 +1,67 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="app-container">
+    <!-- 모바일 헤더 -->
+    <header class="mobile-header">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-brand">
+            <h1 class="logo-text">LE<span class="highlight">A</span>RN</h1>
+        </div>
+    </header>
+
+    <!-- 사이드바 -->
+    {% include "layout/sidebar.html" %}
+
+    <!-- 메인 컨텐츠 -->
+    <main class="content">
+        {% block main_content %}{% endblock %}
+    </main>
+</div>
+
+<style>
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: var(--font-pretendard);
+}
+
+.mobile-header {
+    font-family: var(--font-pretendard);
+}
+
+.logo-text {
+    font-family: var(--font-pretendard);
+    font-weight: 900;
+}
+
+.content {
+    font-family: var(--font-pretendard);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('show');
+    document.querySelector('.content').classList.toggle('sidebar-show');
+}
+
+// 모바일에서 사이드바 외부 클릭 시 닫기
+document.addEventListener('click', function(event) {
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    
+    if (window.innerWidth <= 991.98) {
+        if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+            sidebar.classList.remove('show');
+            document.querySelector('.content').classList.remove('sidebar-show');
+        }
+    }
+});
+</script>
+{{ super() }}
+{% endblock %} 

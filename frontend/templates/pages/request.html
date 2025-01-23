@@ -1,0 +1,371 @@
+{% extends "layout/app.html" %}
+
+{% block title %}계정 신청{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+    <!-- 진행 단계 표시 -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between position-relative mb-4">
+            <div class="step active text-center">
+                <div class="step-circle">1</div>
+                <div class="step-text">플랫폼 선택</div>
+            </div>
+            <div class="step text-center">
+                <div class="step-circle">2</div>
+                <div class="step-text">계정 선택</div>
+            </div>
+            <div class="step text-center">
+                <div class="step-circle">3</div>
+                <div class="step-text">예약 정보</div>
+            </div>
+            <div class="progress position-absolute" style="width: 100%; height: 2px; top: 20px; z-index: -1;">
+                <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 플랫폼 선택 섹션 -->
+    <div id="platformSection">
+        <h2 class="h4 mb-4">학습 플랫폼 선택</h2>
+        <p class="text-muted mb-4">사용하고자 하는 학습 플랫폼을 선택해주세요.</p>
+        <div id="platformList" class="row g-4">
+            <!-- 플랫폼 목록이 여기에 동적으로 로드됩니다 -->
+        </div>
+    </div>
+
+    <!-- 계정 선택 섹션 -->
+    <div id="accountSection" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>계정 선택</h3>
+            <button type="button" class="btn btn-outline-secondary" onclick="showPlatformSection()">
+                <i class="bi bi-arrow-left"></i> 플랫폼 선택으로 돌아가기
+            </button>
+        </div>
+        <div id="accountList" class="row g-4">
+            <!-- 계정 목록이 여기에 동적으로 로드됩니다 -->
+        </div>
+    </div>
+
+    <!-- 예약 정보 입력 섹션 -->
+    <div id="reservationSection" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>예약 정보 입력</h3>
+            <button type="button" class="btn btn-outline-secondary" onclick="showAccountSection()">
+                <i class="bi bi-arrow-left"></i> 계정 선택으로 돌아가기
+            </button>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <form id="reservationForm" onsubmit="submitReservation(event)">
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">시작일</label>
+                        <input type="date" class="form-control" id="startDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">종료일</label>
+                        <input type="date" class="form-control" id="endDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="memo" class="form-label">메모 (선택사항)</label>
+                        <textarea class="form-control" id="memo" rows="3"></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            신청하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.step {
+    width: 120px;
+    z-index: 1;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-circle {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step.completed .step-circle {
+    background-color: #198754;
+    color: white;
+}
+
+.step-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.step.active .step-text {
+    color: #0d6efd;
+}
+
+.step.completed .step-text {
+    color: #198754;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+.platform-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.platform-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.account-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.account-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.platform-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+</style>
+
+<script>
+let selectedPlatformId = null;
+let selectedAccountId = null;
+
+// 페이지 로드 시 플랫폼 목록 로드
+document.addEventListener('DOMContentLoaded', loadPlatforms);
+
+// 진행 단계 업데이트 함수
+function updateProgress(step) {
+    const steps = document.querySelectorAll('.step');
+    const progressBar = document.querySelector('.progress-bar');
+    
+    steps.forEach((stepEl, index) => {
+        if (index + 1 < step) {
+            stepEl.classList.add('completed');
+            stepEl.classList.remove('active');
+        } else if (index + 1 === step) {
+            stepEl.classList.add('active');
+            stepEl.classList.remove('completed');
+        } else {
+            stepEl.classList.remove('active', 'completed');
+        }
+    });
+    
+    // 프로그레스 바 업데이트
+    const progress = ((step - 1) / 2) * 100;
+    progressBar.style.width = `${progress}%`;
+}
+
+async function loadPlatforms() {
+    try {
+        const response = await fetch('/api/platforms');
+        const platforms = await response.json();
+        
+        const platformList = document.getElementById('platformList');
+        platformList.innerHTML = platforms.map(platform => `
+            <div class="col">
+                <div class="card h-100 platform-card" onclick="selectPlatform(${platform.id})">
+                    <div class="card-body d-flex align-items-center">
+                        <img src="${platform.logo || '/static/img/default-platform.png'}" 
+                             alt="${platform.name}" 
+                             class="platform-logo me-3">
+                        <div>
+                            <h5 class="card-title mb-1">${platform.name}</h5>
+                            <p class="card-text text-muted small mb-0">${platform.description || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // 첫 번째 단계 활성화
+        updateProgress(1);
+    } catch (error) {
+        console.error('플랫폼 목록 로드 실패:', error);
+        if (error.message.includes('401')) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            window.location.href = '/login';
+        } else {
+            alert('플랫폼 목록을 불러오는데 실패했습니다.');
+        }
+    }
+}
+
+async function selectPlatform(platformId) {
+    console.log('플랫폼 선택:', platformId);
+    selectedPlatformId = platformId;
+    
+    try {
+        console.log('계정 목록 요청 시작');
+        const response = await fetch(`/api/accounts?platform_id=${platformId}`);
+        console.log('API 응답:', response);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const accounts = await response.json();
+        console.log('받은 계정 목록:', accounts);
+        
+        const accountList = document.getElementById('accountList');
+        accountList.innerHTML = accounts.map(account => `
+            <div class="col">
+                <div class="card h-100 account-card ${account.is_active ? '' : 'bg-light'}" 
+                     onclick="${account.is_active ? `selectAccount(${account.id})` : ''}"
+                     style="${account.is_active ? '' : 'cursor: not-allowed;'}">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">${account.email}</h6>
+                        <p class="card-text small text-${account.is_active ? 'success' : 'danger'} mb-0">
+                            ${account.is_active ? '사용 가능' : '사용 중'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // 섹션 표시 전환
+        console.log('섹션 전환: 플랫폼 -> 계정');
+        document.getElementById('platformSection').classList.add('d-none');
+        document.getElementById('accountSection').classList.remove('d-none');
+        
+        // 두 번째 단계 활성화
+        updateProgress(2);
+    } catch (error) {
+        console.error('계정 목록을 불러오는데 실패했습니다:', error);
+        if (error.message.includes('401')) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            window.location.href = '/login';
+        } else {
+            alert('계정 목록을 불러오는데 실패했습니다.');
+        }
+    }
+}
+
+function selectAccount(accountId) {
+    selectedAccountId = accountId;
+    
+    // 섹션 표시 전환
+    document.getElementById('accountSection').classList.add('d-none');
+    document.getElementById('reservationSection').classList.remove('d-none');
+    
+    // 날짜 입력 필드 초기화
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').min = today;
+    document.getElementById('startDate').value = today;
+    
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 1);
+    document.getElementById('endDate').min = today;
+    document.getElementById('endDate').max = maxDate.toISOString().split('T')[0];
+    
+    // 세 번째 단계 활성화
+    updateProgress(3);
+}
+
+function backToPlatforms() {
+    selectedPlatformId = null;
+    selectedAccountId = null;
+    document.getElementById('accountSection').classList.add('d-none');
+    document.getElementById('platformSection').classList.remove('d-none');
+    updateProgress(1);
+}
+
+function backToAccounts() {
+    selectedAccountId = null;
+    document.getElementById('reservationSection').classList.add('d-none');
+    document.getElementById('accountSection').classList.add('d-none');
+    updateProgress(2);
+}
+
+async function submitReservation(event) {
+    event.preventDefault();
+    
+    const startDate = document.getElementById('startDate').value;  // YYYY-MM-DD 형식
+    const endDate = document.getElementById('endDate').value;      // YYYY-MM-DD 형식
+    const memo = document.getElementById('memo').value;
+    
+    try {
+        const response = await fetch('/api/reservations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                account_id: selectedAccountId,
+                start_date: startDate,
+                end_date: endDate,
+                memo: memo
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        alert('계정 신청이 완료되었습니다.');
+        window.location.href = '/my-reservations';  // 내 신청 현황 페이지로 리다이렉트
+    } catch (error) {
+        console.error('계정 신청 실패:', error);
+        if (error.message.includes('401')) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            window.location.href = '/login';
+        } else {
+            alert(error.message || '계정 신청에 실패했습니다.');
+        }
+    }
+}
+
+// 플랫폼 선택 섹션 표시
+function showPlatformSection() {
+    document.getElementById('platformSection').classList.remove('d-none');
+    document.getElementById('accountSection').classList.add('d-none');
+    document.getElementById('reservationSection').classList.add('d-none');
+    updateProgress(1);
+}
+
+// 계정 선택 섹션 표시
+function showAccountSection() {
+    document.getElementById('platformSection').classList.add('d-none');
+    document.getElementById('accountSection').classList.remove('d-none');
+    document.getElementById('reservationSection').classList.add('d-none');
+    updateProgress(2);
+}
+
+// 예약 정보 입력 섹션 표시
+function showReservationSection() {
+    document.getElementById('platformSection').classList.add('d-none');
+    document.getElementById('accountSection').classList.add('d-none');
+    document.getElementById('reservationSection').classList.remove('d-none');
+    updateProgress(3);
+}
+</script>
+{% endblock %} 

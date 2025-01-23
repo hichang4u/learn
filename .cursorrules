@@ -1,0 +1,173 @@
+# Cursor 프로젝트 코딩 규칙
+
+## 1. 파일 구조
+
+### 1.1 디렉토리 구조
+```
+app/
+├── core/              # 핵심 설정 및 유틸리티
+│   ├── config.py     # 환경 설정
+│   └── security.py   # 보안 관련 유틸리티
+├── crud/             # 데이터베이스 CRUD 작업
+├── models/           # 데이터베이스 모델
+├── routers/          # API 라우터
+├── schemas/          # Pydantic 모델
+└── dependencies.py   # 의존성 주입
+
+frontend/
+├── templates/        # HTML 템플릿
+│   ├── layout/      # 레이아웃 템플릿
+│   ├── auth/        # 인증 관련 템플릿
+│   └── pages/       # 페이지별 템플릿
+└── static/          # 정적 파일
+    ├── css/         # 스타일시트
+    ├── js/          # 자바스크립트
+    └── img/         # 이미지
+```
+
+### 1.2 파일 명명 규칙
+- 모든 파일명은 소문자와 언더스코어(_) 사용
+- 파이썬 파일: `기능_목적.py` (예: user_crud.py)
+- 템플릿 파일: `기능_목적.html` (예: user_list.html)
+- 테스트 파일: `test_모듈명.py` (예: test_user_crud.py)
+
+## 2. 코드 스타일
+
+### 2.1 Python 코드
+- PEP 8 준수 필수
+- 들여쓰기: 4칸 스페이스 (탭 사용 금지)
+- 최대 줄 길이: 120자
+- 함수/변수명: snake_case
+- 클래스명: PascalCase
+- 상수명: UPPER_SNAKE_CASE
+- Type Hints 필수 사용
+
+```python
+from typing import Optional, List
+from datetime import datetime
+
+class UserService:
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """사용자 ID로 사용자 정보를 조회합니다."""
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def get_active_users(self) -> List[User]:
+        """활성 상태인 사용자 목록을 조회합니다."""
+        return self.db.query(User).filter(User.is_active == True).all()
+```
+
+### 2.2 FastAPI 라우터
+- 라우터 접두사(prefix) 필수 지정
+- 태그(tags) 필수 지정
+- 응답 모델(response_model) 필수 지정
+- 의존성 주입(Depends) 명시적 사용
+- 예외 처리 구체적으로 명시
+
+```python
+@router.get(
+    "/{user_id}",
+    response_model=schemas.UserResponse,
+    responses={
+        404: {"description": "User not found"},
+        401: {"description": "Not authenticated"}
+    }
+)
+async def read_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """특정 사용자의 정보를 조회합니다."""
+    if user := crud.user.get(db, user_id):
+        return user
+    raise HTTPException(status_code=404, detail="User not found")
+```
+
+### 2.3 데이터베이스 모델
+- 모든 테이블에 created_at, updated_at 필수
+- 외래 키에 적절한 ondelete 규칙 필수
+- 인덱스 정책 명시적 정의
+- Enum 사용 시 별도 클래스로 정의
+
+```python
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+```
+
+## 3. 소스 코드 수정 규칙
+
+### 3.1 일반 규칙
+- 모든 코드 수정은 이슈 또는 작업 항목과 연결되어야 함
+- 한 번의 수정은 한 가지 목적만 수행
+- 수정 전후 동작이 동일해야 함
+- 모든 수정은 코드 리뷰 필수
+
+### 3.2 수정 절차
+1. 수정 전 현재 코드의 동작 방식 문서화
+2. 수정 계획 작성 및 리뷰
+3. 테스트 코드 작성 또는 수정
+4. 실제 코드 수정
+5. 테스트 실행 및 검증
+6. 코드 리뷰 및 승인
+7. 배포 및 모니터링
+
+### 3.3 금지 사항
+- 임시 방편의 해결책 사용 금지
+- 주석 처리된 코드 남기기 금지
+- 테스트 없는 코드 수정 금지
+- 문서화되지 않은 수정 금지
+- 한 번에 많은 파일 수정 금지
+
+### 3.4 리팩토링 규칙
+- 기능 수정과 리팩토링 동시 진행 금지
+- 리팩토링은 별도의 작업 항목으로 관리
+- 리팩토링 전후 테스트 결과 동일해야 함
+- 성능 저하 없는지 반드시 확인
+
+## 4. 보안 규칙
+
+### 4.1 인증/인가
+- 모든 보호된 라우트에 보안 데코레이터 필수
+- 세션 관리는 보안 정책 준수
+- CSRF 토큰 검증 필수
+- API 키는 환경 변수로 관리
+
+### 4.2 데이터 보안
+- 모든 사용자 입력 데이터 검증 필수
+- SQL 인젝션 방지를 위해 ORM 사용
+- 비밀번호는 반드시 해시화하여 저장
+- 중요 정보는 암호화하여 저장
+
+## 5. 테스트 규칙
+
+### 5.1 단위 테스트
+- 모든 새로운 코드는 단위 테스트 필수
+- 테스트 커버리지 80% 이상 유지
+- 테스트는 독립적으로 실행 가능해야 함
+- 테스트 데이터는 픽스처로 관리
+
+### 5.2 통합 테스트
+- 주요 기능 흐름에 대한 통합 테스트 필수
+- 실제 DB를 사용한 테스트 구현
+- 외부 API 연동 테스트는 모의 객체 사용
+- 성능 테스트 시나리오 구현
+
+## 6. 배포 규칙
+
+### 6.1 버전 관리
+- 시맨틱 버저닝 준수
+- 주요 버전 변경 시 마이그레이션 계획 필수
+- 변경 내역 문서화 필수
+- 롤백 계획 수립 필수
+
+### 6.2 환경 설정
+- 환경별 설정 파일 분리
+- 민감한 설정은 환경 변수로 관리
+- 로깅 레벨 환경별 차등 적용
+- 캐시 정책 명확히 정의

@@ -1,0 +1,394 @@
+{% extends "layout/app.html" %}
+
+{% block title %}사용 일정{% endblock %}
+
+{% block styles %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+<style>
+/* 기본 색상 설정 */
+.fc {
+    --fc-border-color: transparent !important;
+    --fc-page-bg-color: transparent !important;
+    --fc-neutral-bg-color: transparent !important;
+    color: #000000;
+}
+
+/* 모든 구분선 제거 */
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid *,
+.fc td,
+.fc th,
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid,
+.fc .fc-scrollgrid-section > *,
+.fc .fc-scrollgrid-section table,
+.fc .fc-daygrid-day,
+.fc .fc-daygrid-day-frame,
+.fc .fc-daygrid-day-events,
+.fc .fc-daygrid-day-bg,
+.fc table,
+.fc-scrollgrid-sync-table {
+    border: none !important;
+    border-width: 0 !important;
+}
+
+.content-wrapper {
+    padding: 1.5rem;
+}
+
+.calendar-wrapper {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.475rem;
+    padding: 1.5rem;
+    box-shadow: 0 0 20px 0 rgba(76,87,125,.02);
+}
+
+#calendar {
+    background-color: var(--card-bg);
+}
+
+/* 요일 헤더 스타일 */
+.fc-col-header {
+    background-color: transparent;
+    padding: 15px 0;
+}
+
+.fc-col-header-cell {
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+/* 주말 및 공휴일 색상 */
+.fc-day-sun .fc-daygrid-day-number,
+.fc-col-header-cell.fc-day-sun {
+    color: #dc3545 !important;  /* 빨간색 */
+}
+
+.fc-day-sat .fc-daygrid-day-number,
+.fc-col-header-cell.fc-day-sat {
+    color: #0d6efd !important;  /* 파란색 */
+}
+
+/* 평일 색상 */
+.fc-day-mon .fc-daygrid-day-number,
+.fc-day-tue .fc-daygrid-day-number,
+.fc-day-wed .fc-daygrid-day-number,
+.fc-day-thu .fc-daygrid-day-number,
+.fc-day-fri .fc-daygrid-day-number,
+.fc-col-header-cell.fc-day-mon,
+.fc-col-header-cell.fc-day-tue,
+.fc-col-header-cell.fc-day-wed,
+.fc-col-header-cell.fc-day-thu,
+.fc-col-header-cell.fc-day-fri {
+    color: #000000 !important;  /* 검은색 */
+}
+
+/* 날짜 스타일 */
+.fc-daygrid-day-number {
+    font-weight: 500;
+    padding: 8px !important;
+    font-size: 1rem;
+}
+
+/* 오늘 날짜 배경색 */
+.fc-day-today {
+    background-color: rgba(0, 158, 247, 0.05) !important;
+}
+
+/* 이전/다음 달 날짜 */
+.fc-day-other .fc-daygrid-day-number {
+    opacity: 0.3;
+}
+
+/* 툴바 스타일 */
+.fc .fc-toolbar {
+    margin-bottom: 2rem !important;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* 버튼 스타일 */
+.fc .fc-button-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 0.475rem;
+    transition: all 0.2s ease;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: var(--primary-active);
+    border-color: var(--primary-active);
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: var(--primary-active);
+    border-color: var(--primary-active);
+}
+
+/* 이벤트 스타일 */
+.fc-event {
+    cursor: pointer;
+    border: none !important;
+    padding: 2px 4px;
+    margin: 1px 0;
+}
+
+.fc-event-title {
+    white-space: normal;
+    overflow: visible;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 767.98px) {
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .calendar-wrapper {
+        margin: -1rem;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        padding: 1rem;
+    }
+
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.15rem;
+    }
+
+    .fc .fc-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .fc-daygrid-day-number {
+        font-size: 0.9rem;
+    }
+}
+
+/* 목록 뷰 스타일 */
+.fc-list-view {
+    width: 100% !important;
+}
+
+.fc-list-table {
+    width: 100% !important;
+}
+
+.fc .fc-list-table {
+    border: none !important;
+}
+
+.fc .fc-list-empty {
+    background-color: transparent !important;
+    height: 300px !important;
+}
+
+/* 목록 뷰 헤더 스타일 */
+.fc .fc-list-day-cushion {
+    background-color: rgba(0, 158, 247, 0.05) !important;
+    padding: 8px 14px !important;
+}
+
+.fc .fc-list-event:hover td {
+    background-color: rgba(0, 158, 247, 0.05) !important;
+}
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">사용 일정</h1>
+        <div class="btn-group">
+            <button id="refreshButton" class="btn btn-outline-secondary">
+                <i class="fas fa-sync-alt"></i>
+                새로고침
+            </button>
+        </div>
+    </div>
+
+    <div class="calendar-wrapper">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- 일정 상세 정보 모달 -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">일정 상세 정보</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">플랫폼</dt>
+                    <dd class="col-sm-8" id="modalPlatform"></dd>
+                    
+                    <dt class="col-sm-4">계정</dt>
+                    <dd class="col-sm-8" id="modalAccount"></dd>
+                    
+                    <dt class="col-sm-4">사용자</dt>
+                    <dd class="col-sm-8" id="modalUser"></dd>
+                    
+                    <dt class="col-sm-4">사용 기간</dt>
+                    <dd class="col-sm-8" id="modalPeriod"></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<script>
+let calendar;
+const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        locale: 'ko',
+        height: 'auto',
+        firstDay: 1,
+        buttonText: {
+            today: '오늘',
+            month: '월',
+            week: '주',
+            list: '목록'
+        },
+        dayCellClassNames: function(arg) {
+            if (arg.date.getDay() === 0) { // 일요일
+                return ['sunday'];
+            } else if (arg.date.getDay() === 6) { // 토요일
+                return ['saturday'];
+            }
+            return [];
+        },
+        dayHeaderFormat: { weekday: 'short' },
+        views: {
+            dayGridMonth: {
+                titleFormat: { year: 'numeric', month: 'long' },
+                dayHeaderFormat: { weekday: 'short' },
+                dayCellContent: function(arg) {
+                    return { html: String(arg.date.getDate()) };
+                }
+            },
+            timeGridWeek: {
+                titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+                dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' }
+            },
+            listMonth: {
+                titleFormat: { year: 'numeric', month: 'long' }
+            }
+        },
+        eventClick: function(info) {
+            showEventDetails(info.event);
+        },
+        eventDidMount: function(info) {
+            info.el.setAttribute('data-bs-toggle', 'tooltip');
+            info.el.setAttribute('data-bs-title', info.event.title);
+            new bootstrap.Tooltip(info.el);
+        }
+    });
+    calendar.render();
+    loadReservations();
+});
+
+async function loadReservations() {
+    try {
+        const response = await fetch('/api/reservations/approved');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const reservations = await response.json();
+        
+        // 캘린더 이벤트로 변환
+        const events = reservations.map(reservation => {
+            let color;
+            switch(reservation.account.platform.name.toLowerCase()) {
+                case '인프런':
+                    color = '#00C471';  // 인프런 녹색
+                    break;
+                case '유데미':
+                    color = '#A435F0';  // 유데미 보라색
+                    break;
+                default:
+                    color = '#3788d8';  // 기본 파란색
+            }
+
+            const position = reservation.user.position_value || '';
+            const username = reservation.account.username || reservation.account.email || '계정';
+            
+            return {
+                id: reservation.id,
+                title: `${reservation.user.full_name} ${position} - [${reservation.account.platform.name}] ${username}`,
+                start: reservation.start_date,
+                end: new Date(new Date(reservation.end_date).getTime() + 24 * 60 * 60 * 1000), // 종료일 다음날
+                backgroundColor: color,
+                borderColor: color,
+                allDay: true,  // all-day 이벤트로 설정
+                extendedProps: {  // 모달에 표시할 상세 정보 추가
+                    platform: reservation.account.platform.name,
+                    account: username,
+                    user: reservation.user.full_name,
+                    position: position
+                }
+            };
+        });
+
+        calendar.removeAllEvents();
+        calendar.addEventSource(events);
+    } catch (error) {
+        console.error('예약 데이터 로드 실패:', error);
+    }
+}
+
+function showEventDetails(event) {
+    document.getElementById('modalPlatform').textContent = event.extendedProps.platform;
+    document.getElementById('modalAccount').textContent = event.extendedProps.account;
+    document.getElementById('modalUser').textContent = 
+        `${event.extendedProps.user}${event.extendedProps.position ? ` ${event.extendedProps.position}` : ''}`;
+    document.getElementById('modalPeriod').textContent = 
+        `${event.start.toLocaleDateString()} ~ ${event.end.toLocaleDateString()}`;
+    eventModal.show();
+}
+
+// 새로고침 버튼 이벤트 핸들러
+document.getElementById('refreshButton').addEventListener('click', loadReservations);
+</script>
+{% endblock %} 
