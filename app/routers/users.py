@@ -13,7 +13,7 @@ async def get_users(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
-    users = db.query(models.User).order_by(models.User.username).all()
+    users = db.query(models.User).order_by(models.User.email).all()
     return users
 
 @router.get("/{user_id}", response_model=schemas.UserResponse)
@@ -41,8 +41,8 @@ async def create_user(
         )
 
     # 중복 사용자명 체크
-    existing_username = db.query(models.User).filter(models.User.username == user.username).first()
-    if existing_username:
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다.")
     
     # 중복 이메일 체크
@@ -78,11 +78,11 @@ async def update_user(
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
     # 다른 사용자와 중복되는 사용자명 체크
-    existing_username = db.query(models.User).filter(
-        models.User.username == user.username,
+    existing_user = db.query(models.User).filter(
+        models.User.email == user.email,
         models.User.id != user_id
     ).first()
-    if existing_username:
+    if existing_user:
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다.")
     
     # 다른 사용자와 중복되는 이메일 체크

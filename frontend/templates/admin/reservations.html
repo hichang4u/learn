@@ -193,7 +193,7 @@ async function loadReservations() {
                 <td>
                     <div class="user-info">
                         <span class="fw-medium">${reservation.user.full_name}</span>
-                        <span class="badge bg-secondary">${reservation.user.position_value || ''}</span>
+                        <span class="badge bg-secondary">${reservation.user.position || ''}</span>
                     </div>
                     <div class="small text-muted">${reservation.user.email}</div>
                 </td>

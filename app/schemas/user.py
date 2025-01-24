@@ -29,27 +29,10 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     position: Optional[Position] = None
-    position_value: Optional[str] = None
     is_active: bool
+    is_superuser: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        if self.position:
-            # position에 따른 한글 직급 설정
-            position_map = {
-                Position.STAFF: "사원",
-                Position.ASSISTANT_MANAGER: "대리",
-                Position.MANAGER: "과장",
-                Position.DEPUTY_GENERAL_MANAGER: "차장",
-                Position.GENERAL_MANAGER: "부장",
-                Position.DIRECTOR: "이사",
-                Position.MANAGING_DIRECTOR: "상무",
-                Position.EXECUTIVE_DIRECTOR: "전무",
-                Position.CEO: "대표"
-            }
-            self.position_value = position_map.get(self.position) 

@@ -61,12 +61,14 @@ async def platforms_page(
 @router.get("/accounts", response_class=HTMLResponse)
 async def accounts_page(
     request: Request,
-    user: Annotated[User, Depends(login_required)]
+    current_user: Annotated[User, Depends(login_required)]
 ):
     """계정 관리 페이지"""
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="관리자만 접근할 수 있습니다.")
     return templates.TemplateResponse(
         "admin/accounts.html",
-        {"request": request, "user": user}
+        {"request": request}
     )
 
 @router.get("/users", response_class=HTMLResponse)

@@ -10,21 +10,28 @@ class AccountBase(BaseModel):
     memo: Optional[str] = None
     is_active: bool = True
 
-class AccountCreate(AccountBase):
+class AccountCreate(BaseModel):
     """계정 생성 스키마"""
+    platform_id: int
+    email: str
     password: str
+    memo: Optional[str] = None
+    is_active: bool = True
 
-class AccountUpdate(AccountBase):
+class AccountUpdate(BaseModel):
     """계정 수정 스키마"""
     platform_id: Optional[int] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     password: Optional[str] = None
+    memo: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class AccountResponse(BaseModel):
     """계정 응답 스키마"""
     id: int
     platform_id: int
     email: str
+    hashed_password: str  # 비밀번호 표시를 위해 추가
     memo: Optional[str] = None
     is_active: bool = True
     created_at: datetime

@@ -1,3 +1,212 @@
 {% extends "layout/app.html" %}
 
-{% block title %}사용자 관리{% endblock %} 
+{% block title %}사용자 관리{% endblock %}
+
+{% block main_content %}
+<main>
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">사용자 관리</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-users me-1"></i>
+                사용자 목록
+            </div>
+            <div class="card-body">
+                <table id="usersTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>직급</th>
+                            <th>관리자</th>
+                            <th>상태</th>
+                            <th>가입일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사용자 수정 모달 -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">사용자 정보 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">이름</label>
+                            <input type="text" class="form-control" id="fullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">이메일</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="position" class="form-label">직급</label>
+                            <select class="form-select" id="position" required>
+                                <option value="사원">사원</option>
+                                <option value="대리">대리</option>
+                                <option value="과장">과장</option>
+                                <option value="차장">차장</option>
+                                <option value="부장">부장</option>
+                                <option value="이사">이사</option>
+                                <option value="상무">상무</option>
+                                <option value="전무">전무</option>
+                                <option value="대표">대표</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isSuperuser">
+                            <label class="form-check-label" for="isSuperuser">관리자 권한</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isActive">
+                            <label class="form-check-label" for="isActive">활성 상태</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let userModal;
+    let toast;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        userModal = new bootstrap.Modal(document.getElementById('userModal'));
+        toast = new bootstrap.Toast(document.getElementById('toast'));
+        loadUsers();
+    });
+
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users/', {
+                headers: {
+                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+                },
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('사용자 목록을 불러오는데 실패했습니다.');
+            
+            const users = await response.json();
+            const tbody = document.getElementById('usersList');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.full_name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.position}</td>
+                    <td>${user.is_superuser ? '<span class="badge bg-warning">관리자</span>' : ''}</td>
+                    <td>${user.is_active ? '<span class="badge bg-success">활성</span>' : '<span class="badge bg-danger">비활성</span>'}</td>
+                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            showToast(error.message, 'danger');
+        }
+    }
+
+    async function editUser(userId) {
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                headers: {
+                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+                },
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('사용자 정보를 불러오는데 실패했습니다.');
+            
+            const user = await response.json();
+            
+            document.getElementById('userId').value = user.id;
+            document.getElementById('fullName').value = user.full_name;
+            document.getElementById('email').value = user.email;
+            document.getElementById('position').value = user.position;
+            document.getElementById('isSuperuser').checked = user.is_superuser;
+            document.getElementById('isActive').checked = user.is_active;
+            
+            userModal.show();
+        } catch (error) {
+            showToast(error.message, 'danger');
+        }
+    }
+
+    async function saveUser() {
+        try {
+            const userId = document.getElementById('userId').value;
+            const userData = {
+                full_name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                position: document.getElementById('position').value,
+                is_superuser: document.getElementById('isSuperuser').checked,
+                is_active: document.getElementById('isActive').checked
+            };
+
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+                },
+                credentials: 'include',
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || '사용자 정보 수정에 실패했습니다.');
+            }
+
+            userModal.hide();
+            showToast('사용자 정보가 수정되었습니다.', 'success');
+            loadUsers();
+        } catch (error) {
+            showToast(error.message, 'danger');
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toastElement = document.getElementById('toast');
+        toastElement.className = `toast align-items-center text-white bg-${type} border-0`;
+        toastElement.querySelector('.toast-body').textContent = message;
+        toast.show();
+    }
+</script>
+{% endblock %} 

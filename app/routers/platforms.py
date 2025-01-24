@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Annotated, List
 import logging
-from .. import models, schemas, database, dependencies
+from .. import models, schemas, database, dependencies, crud
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -44,23 +44,19 @@ async def create_platform(
     current_user: Annotated[models.User, Depends(dependencies.login_required)],
     db: Session = Depends(database.get_db)
 ):
-    # 관리자만 플랫폼 생성 가능
-    if current_user.role != models.UserRole.ADMIN:
+    # 관리자만 플랫폼을 생성할 수 있음
+    if not current_user.is_superuser:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            status_code=403,
+            detail="관리자만 플랫폼을 생성할 수 있습니다."
         )
-
+    
     # 중복 이름 체크
     existing = db.query(models.Platform).filter(models.Platform.name == platform.name).first()
     if existing:
         raise HTTPException(status_code=400, detail="이미 존재하는 플랫폼 이름입니다.")
-
-    db_platform = models.Platform(**platform.dict())
-    db.add(db_platform)
-    db.commit()
-    db.refresh(db_platform)
-    return db_platform
+    
+    return crud.platform.create(db, obj_in=platform)
 
 @router.put("/{platform_id}", response_model=schemas.PlatformResponse)
 async def update_platform(
@@ -70,10 +66,10 @@ async def update_platform(
     db: Session = Depends(database.get_db)
 ):
     # 관리자만 플랫폼 수정 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            detail="관리자만 플랫폼을 수정할 수 있습니다."
         )
 
     db_platform = db.query(models.Platform).filter(models.Platform.id == platform_id).first()
@@ -102,10 +98,10 @@ async def delete_platform(
     db: Session = Depends(database.get_db)
 ):
     # 관리자만 플랫폼 삭제 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            detail="관리자만 플랫폼을 삭제할 수 있습니다."
         )
 
     platform = db.query(models.Platform).filter(models.Platform.id == platform_id).first()

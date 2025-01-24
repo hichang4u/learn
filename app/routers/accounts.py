@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-from .. import models, schemas, database, auth, dependencies
+from .. import models, schemas, database, dependencies
 
 router = APIRouter(
     prefix="/api/accounts",
@@ -27,6 +27,7 @@ async def get_accounts(
             "id": account.id,
             "platform_id": account.platform_id,
             "email": account.email,
+            "password": account.hashed_password,
             "memo": account.memo,
             "is_active": account.is_active,
             "created_at": account.created_at,
@@ -44,8 +45,8 @@ async def get_accounts(
 @router.get("/{account_id}", response_model=schemas.AccountResponse)
 async def get_account(
     account_id: int,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_active_user)
+    current_user: Annotated[models.User, Depends(dependencies.login_required)],
+    db: Session = Depends(database.get_db)
 ):
     account = db.query(models.Account).filter(models.Account.id == account_id).first()
     if not account:
@@ -55,14 +56,14 @@ async def get_account(
 @router.post("/", response_model=schemas.AccountResponse)
 async def create_account(
     account: schemas.AccountCreate,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_active_user)
+    current_user: Annotated[models.User, Depends(dependencies.login_required)],
+    db: Session = Depends(database.get_db)
 ):
     # 관리자만 계정 생성 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            detail="관리자만 계정을 생성할 수 있습니다."
         )
 
     # 플랫폼 존재 여부 확인
@@ -78,24 +79,31 @@ async def create_account(
     if existing_account:
         raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
     
-    db_account = models.Account(**account.dict())
+    # 계정 생성
+    db_account = models.Account(
+        platform_id=account.platform_id,
+        email=account.email,
+        hashed_password=account.password,
+        memo=account.memo,
+        is_active=account.is_active
+    )
     db.add(db_account)
     db.commit()
     db.refresh(db_account)
     return db_account
 
-@router.put("/{account_id}", response_model=schemas.AccountResponse)
+@router.put("/{account_id}")
 async def update_account(
     account_id: int,
     account: schemas.AccountUpdate,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_active_user)
+    current_user: Annotated[models.User, Depends(dependencies.login_required)],
+    db: Session = Depends(database.get_db)
 ):
     # 관리자만 계정 수정 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            detail="관리자만 계정을 수정할 수 있습니다."
         )
 
     db_account = db.query(models.Account).filter(models.Account.id == account_id).first()
@@ -103,37 +111,65 @@ async def update_account(
         raise HTTPException(status_code=404, detail="계정을 찾을 수 없습니다.")
     
     # 플랫폼 존재 여부 확인
-    platform = db.query(models.Platform).filter(models.Platform.id == account.platform_id).first()
-    if not platform:
-        raise HTTPException(status_code=404, detail="존재하지 않는 플랫폼입니다.")
+    if account.platform_id:
+        platform = db.query(models.Platform).filter(models.Platform.id == account.platform_id).first()
+        if not platform:
+            raise HTTPException(status_code=404, detail="존재하지 않는 플랫폼입니다.")
     
     # 다른 계정과 중복되는 이메일 체크
-    existing_account = db.query(models.Account).filter(
-        models.Account.platform_id == account.platform_id,
-        models.Account.email == account.email,
-        models.Account.id != account_id
-    ).first()
-    if existing_account:
-        raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
+    if account.email:
+        existing_account = db.query(models.Account).filter(
+            models.Account.platform_id == (account.platform_id or db_account.platform_id),
+            models.Account.email == account.email,
+            models.Account.id != account_id
+        ).first()
+        if existing_account:
+            raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
     
-    for key, value in account.dict().items():
-        setattr(db_account, key, value)
+    # 명시적으로 각 필드 업데이트
+    if account.platform_id is not None:
+        db_account.platform_id = account.platform_id
+    if account.email is not None:
+        db_account.email = account.email
+    if account.password:  # 비밀번호가 제공된 경우에만 업데이트
+        db_account.hashed_password = account.password
+    if account.memo is not None:
+        db_account.memo = account.memo
+    if account.is_active is not None:
+        db_account.is_active = account.is_active
     
     db.commit()
     db.refresh(db_account)
-    return db_account
+    
+    # 응답 데이터 반환
+    return {
+        "id": db_account.id,
+        "platform_id": db_account.platform_id,
+        "email": db_account.email,
+        "password": db_account.hashed_password,
+        "memo": db_account.memo,
+        "is_active": db_account.is_active,
+        "created_at": db_account.created_at,
+        "updated_at": db_account.updated_at,
+        "platform": {
+            "id": db_account.platform.id,
+            "name": db_account.platform.name,
+            "description": db_account.platform.description,
+            "logo": db_account.platform.logo
+        }
+    }
 
 @router.delete("/{account_id}")
 async def delete_account(
     account_id: int,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_active_user)
+    current_user: Annotated[models.User, Depends(dependencies.login_required)],
+    db: Session = Depends(database.get_db)
 ):
     # 관리자만 계정 삭제 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="권한이 없습니다."
+            detail="관리자만 계정을 삭제할 수 있습니다."
         )
 
     account = db.query(models.Account).filter(models.Account.id == account_id).first()

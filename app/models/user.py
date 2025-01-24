@@ -8,15 +8,15 @@ from app.database import Base
 
 class Position(str, Enum):
     """사용자 직급"""
-    STAFF = "STAFF"                           # 사원
-    ASSISTANT_MANAGER = "ASSISTANT_MANAGER"    # 대리
-    MANAGER = "MANAGER"                       # 과장
-    DEPUTY_GENERAL_MANAGER = "DEPUTY_GENERAL_MANAGER"  # 차장
-    GENERAL_MANAGER = "GENERAL_MANAGER"       # 부장
-    DIRECTOR = "DIRECTOR"                     # 이사
-    MANAGING_DIRECTOR = "MANAGING_DIRECTOR"   # 상무
-    EXECUTIVE_DIRECTOR = "EXECUTIVE_DIRECTOR" # 전무
-    CEO = "CEO"                              # 대표
+    사원 = "사원"
+    대리 = "대리"
+    과장 = "과장"
+    차장 = "차장"
+    부장 = "부장"
+    이사 = "이사"
+    상무 = "상무"
+    전무 = "전무"
+    대표 = "대표"
 
 class User(Base):
     """사용자 모델"""

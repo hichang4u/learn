@@ -1,3 +1,3 @@
-from . import user
+from . import user, platform
 
-__all__ = ["user"] 
+__all__ = ["user", "platform"] 
