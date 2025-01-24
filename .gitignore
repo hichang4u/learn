@@ -2,13 +2,42 @@
 __pycache__/
 *.py[cod]
 *.pyo
-
-# Virtualenv
+*.pyd
+.Python
+env/
 venv/
+.env
+.venv/
 
 # IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+log/
+
+# Frontend
+node_modules/
+frontend/static/uploads/
+frontend/static/temp/
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+docs/_build/
+
+# Temporary files
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db
 
 # Byte-compiled / optimized / DLL files
 *.pyc
@@ -19,7 +48,6 @@ venv/
 *.so
 
 # Distribution / packaging
-.Python
 build/
 develop-eggs/
 dist/
@@ -49,12 +77,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
 nosetests.xml
 coverage.xml
 *.cover
@@ -65,7 +87,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 
 # Flask stuff:
@@ -84,9 +105,6 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
-
 # celery beat schedule file
 celerybeat-schedule
 
@@ -95,9 +113,6 @@ celerybeat-schedule
 
 # dotenv
 .env
-
-# virtualenv
-.venv
 
 # Spyder project settings
 .spyderproject
