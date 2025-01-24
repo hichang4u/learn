@@ -9,8 +9,8 @@ from app.routers import accounts, auth, platforms, users, web, reservations, adm
 from app.core.config import settings
 
 app = FastAPI(
-    title="계정 관리 시스템",
-    description="다양한 플랫폼의 계정을 관리하는 시스템입니다."
+    title="학습 계정 관리 시스템",
+    description="다양한 온라인 강의 플랫폼의 계정을 관리하는 시스템입니다."
 )
 
 # 세션 미들웨어 추가
@@ -49,4 +49,8 @@ app.include_router(admin.router)  # admin 라우터 추가
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True) 
+    import os
+    
+    # Render에서 제공하는 PORT 환경 변수 사용, 로컬에서는 기본값 8000 사용
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
