@@ -3,7 +3,7 @@
 {% block title %}내 신청 현황{% endblock %}
 
 {% block main_content %}
-<div class="container py-4">
+<div class="content-wrapper h-100">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="h4 mb-0">내 신청 현황</h2>
         <a href="/request" class="btn btn-primary">
@@ -11,31 +11,142 @@
         </a>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div id="reservationList" class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>플랫폼</th>
-                            <th>계정</th>
-                            <th>시작일</th>
-                            <th>종료일</th>
-                            <th>상태</th>
-                            <th>메모</th>
-                            <th>신청일</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reservationTableBody">
-                        <!-- 예약 목록이 여기에 동적으로 로드됩니다 -->
-                    </tbody>
-                </table>
+    <div class="card border-0">
+        <div class="card-body p-0">
+            <div id="reservationList" class="w-100">
+                <!-- 모바일용 카드 뷰 -->
+                <div class="d-block d-md-none w-100" id="reservationCardView">
+                    <!-- 카드 목록이 여기에 동적으로 로드됩니다 -->
+                </div>
+                
+                <!-- 데스크톱용 테이블 뷰 -->
+                <div class="table-responsive d-none d-md-block w-100">
+                    <table class="table table-hover mb-0 w-100">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%">플랫폼</th>
+                                <th style="width: 20%">계정</th>
+                                <th style="width: 12%">시작일</th>
+                                <th style="width: 12%">종료일</th>
+                                <th style="width: 10%">상태</th>
+                                <th style="width: 18%">메모</th>
+                                <th style="width: 13%">신청일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservationTableBody">
+                            <!-- 예약 목록이 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+/* 컨텐츠 래퍼 스타일 */
+.content-wrapper {
+    width: 100%;
+    padding: 1.5rem;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 0;
+    }
+
+    .content-wrapper > .d-flex {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        background-color: var(--bs-white);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .card {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 0;
+    }
+
+    #reservationCardView {
+        background-color: var(--bs-light);
+    }
+    
+    .reservation-card {
+        margin: 0;
+        padding: 1rem;
+        border-radius: 0;
+        border: none;
+        border-bottom: 1px solid var(--bs-border-color);
+        box-shadow: none;
+        background-color: var(--bs-white);
+    }
+    
+    .reservation-card:last-child {
+        border-bottom: none;
+    }
+
+    .reservation-card .platform-info {
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .reservation-card .info-row {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .reservation-card .info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .reservation-card .platform-logo {
+        width: 28px;
+        height: 28px;
+    }
+
+    .reservation-card .platform-name {
+        font-size: 1rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .content-wrapper > .d-flex {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    #reservationCardView {
+        background-color: var(--bs-dark);
+    }
+
+    .reservation-card {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 카드 스타일 */
+.card {
+    background: var(--bs-white);
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: var(--bs-dark);
+        box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+}
+
+/* 상태 배지 스타일 */
 .status-badge {
     padding: 0.35em 0.65em;
     font-size: 0.75em;
@@ -72,6 +183,141 @@
     background-color: var(--bs-secondary);
     color: var(--bs-white);
 }
+
+/* 모바일 카드 스타일 */
+.reservation-card {
+    width: 100%;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background-color: var(--bs-white);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.reservation-card:last-child {
+    margin-bottom: 0;
+}
+
+.reservation-card .platform-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.reservation-card .platform-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    margin-right: 0.75rem;
+    padding: 4px;
+    border-radius: 8px;
+    background-color: var(--bs-light);
+}
+
+.reservation-card .platform-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--bs-gray-900);
+}
+
+.reservation-card .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+}
+
+.reservation-card .info-row:last-child {
+    margin-bottom: 0;
+}
+
+.reservation-card .info-label {
+    color: var(--bs-gray-600);
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-right: 1rem;
+    min-width: 60px;
+}
+
+.reservation-card .info-value {
+    text-align: right;
+    word-break: break-all;
+}
+
+.reservation-card .status-badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.8125rem;
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .reservation-card {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .reservation-card .platform-info {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .reservation-card .platform-logo {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .reservation-card .platform-name {
+        color: var(--bs-white);
+    }
+    
+    .reservation-card .info-label {
+        color: var(--bs-gray-400);
+    }
+}
+
+/* 테이블 반응형 스타일 */
+.table-responsive {
+    margin: 0;
+    border: 0;
+}
+
+.table {
+    margin: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.table th, .table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    padding: 1rem;
+}
+
+.table td img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .table {
+        color: var(--bs-light);
+    }
+    
+    .table td, .table th {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+}
 </style>
 
 <script>
@@ -95,20 +341,23 @@ async function loadReservations() {
         const reservations = await response.json();
         
         const tableBody = document.getElementById('reservationTableBody');
+        const cardView = document.getElementById('reservationCardView');
+        
         if (reservations.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center py-4">
-                        <p class="text-muted mb-0">신청 내역이 없습니다.</p>
-                        <a href="/request" class="btn btn-primary mt-3">
-                            <i class="fas fa-plus"></i> 새로운 신청하기
-                        </a>
-                    </td>
-                </tr>
+            const emptyContent = `
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">신청 내역이 없습니다.</p>
+                    <a href="/request" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus"></i> 새로운 신청하기
+                    </a>
+                </div>
             `;
+            tableBody.innerHTML = `<tr><td colspan="7">${emptyContent}</td></tr>`;
+            cardView.innerHTML = emptyContent;
             return;
         }
 
+        // 테이블 뷰 업데이트
         tableBody.innerHTML = reservations.map(reservation => `
             <tr>
                 <td>
@@ -139,6 +388,47 @@ async function loadReservations() {
                     </span>
                 </td>
             </tr>
+        `).join('');
+
+        // 카드 뷰 업데이트
+        cardView.innerHTML = reservations.map(reservation => `
+            <div class="reservation-card">
+                <div class="platform-info">
+                    <img src="${reservation.account.platform.logo || '/static/img/default-platform.png'}" 
+                         alt="${reservation.account.platform.name}"
+                         class="platform-logo">
+                    <span class="platform-name">${reservation.account.platform.name}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">계정</span>
+                    <span class="info-value">${reservation.account.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">상태</span>
+                    <span class="status-badge status-${reservation.status}">
+                        ${statusText[reservation.status]}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">기간</span>
+                    <span class="info-value">
+                        ${new Date(reservation.start_date).toLocaleDateString()} ~ 
+                        ${new Date(reservation.end_date).toLocaleDateString()}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">메모</span>
+                    <span class="info-value text-muted">
+                        ${reservation.memo || '-'}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">신청일</span>
+                    <span class="info-value text-muted small">
+                        ${new Date(reservation.created_at).toLocaleString()}
+                    </span>
+                </div>
+            </div>
         `).join('');
     } catch (error) {
         console.error('예약 목록 로드 실패:', error);

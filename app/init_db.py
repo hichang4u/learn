@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.database import Base, engine, SessionLocal
+from app.core.database import Base, engine, SessionLocal
 from app.core.security import get_password_hash
 from app.models.platform import Platform
 from app.models.account import Account
@@ -72,6 +72,7 @@ def init_db():
             email="admin@wrsoft.co.kr",
             hashed_password=get_password_hash("admin1234"),
             is_active=True,
+            is_approved=True,
             is_superuser=True,
             full_name="관리자",
             created_at=datetime.now()
@@ -83,6 +84,7 @@ def init_db():
             email="test@wrsoft.co.kr",
             hashed_password=get_password_hash("test1234"),
             is_active=True,
+            is_approved=True,
             is_superuser=False,
             full_name="테스트 사용자",
             created_at=datetime.now()

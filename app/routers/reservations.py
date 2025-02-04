@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Annotated, List
 from datetime import datetime
-from .. import models, schemas, database, dependencies
+from ..core import database
+from .. import models, schemas, dependencies
 from ..schemas.reservation import ReservationCreate, ReservationResponse
 from ..models.reservation import ReservationStatus
 

@@ -1,0 +1,274 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}회원가입{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100">
+    <!-- 모바일 메뉴 토글 버튼 -->
+    <div class="navbar d-lg-none position-absolute top-0 end-0 p-3">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu" aria-controls="mobileMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+
+    <!-- 모바일 메뉴 -->
+    <div class="collapse navbar-collapse d-lg-none" id="mobileMenu">
+        <div class="mobile-menu-content">
+            <div class="d-flex justify-content-end p-3">
+                <button type="button" class="btn-close" data-bs-dismiss="collapse" aria-label="Close"></button>
+            </div>
+            <div class="mobile-menu-items text-center">
+                <a href="/login" class="btn btn-outline-primary mb-3">로그인</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row h-100">
+        <!-- 왼쪽 회원가입 폼 -->
+        <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center bg-white position-relative">
+            <div class="position-relative z-index-1 w-100 p-3 p-lg-4" style="max-width: 450px;">
+                <!-- 로고 -->
+                <div class="text-center mb-4">
+                    <h1 class="logo-text mb-2">LE<span class="highlight">A</span>RN</h1>
+                    <h2 class="fs-3 mb-2">LEARN 회원가입</h2>
+                    <p class="text-muted small">학습 계정 관리 시스템에 가입하세요</p>
+                </div>
+
+                <!-- 회원가입 폼 -->
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                <form method="POST" action="/signup">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">이메일</label>
+                        <input type="email" class="form-control form-control-lg" id="username" name="username" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="full_name" class="form-label">이름</label>
+                        <input type="text" class="form-control form-control-lg" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="position" class="form-label">직급</label>
+                        <select class="form-select" id="position" name="position" required>
+                            <option value="">직급 선택</option>
+                            <option value="STAFF">사원</option>
+                            <option value="DEPUTY_MANAGER">대리</option>
+                            <option value="MANAGER">과장</option>
+                            <option value="DEPUTY_HEAD">차장</option>
+                            <option value="HEAD">부장</option>
+                            <option value="DIRECTOR">이사</option>
+                            <option value="MANAGING">상무</option>
+                            <option value="VICE">전무</option>
+                            <option value="CEO">대표</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">비밀번호</label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" required minlength="8">
+                        <div class="form-text text-muted">최소 8자 이상, 대/소문자, 숫자, 특수문자를 포함해야 합니다</div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">비밀번호 확인</label>
+                        <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg">회원가입</button>
+                    </div>
+                </form>
+                <div class="text-center">
+                    <p class="mb-0">이미 계정이 있으신가요? <a href="/login" class="text-primary">로그인</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오른쪽 이미지/배경 -->
+        <div class="col-lg-6 d-none d-lg-block position-relative overflow-hidden">
+            <div class="position-absolute w-100 h-100 login-bg"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --primary-color: #009ef7;
+    --primary-hover: #0095e8;
+    --light-gray: #f9f9f9;
+}
+
+.max-w-400px {
+    max-width: 400px;
+}
+
+.logo-text {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.logo-text .highlight {
+    color: var(--primary-color);
+}
+
+.form-control, .form-select {
+    border: 1px solid var(--bs-gray-200);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(0, 158, 247, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.z-index-1 {
+    z-index: 1;
+}
+
+.login-bg {
+    background-image: url('/static/images/signup-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.login-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(0, 158, 247, 0.3),
+        rgba(255, 255, 255, 0.1)
+    );
+    backdrop-filter: brightness(0.95);
+}
+
+/* 모바일 메뉴 스타일 */
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    background-color: transparent;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+#mobileMenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.98);
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.mobile-menu-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-menu-items {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-close {
+    font-size: 1.5rem;
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-gray: #1b1b29;
+    }
+    
+    .form-control, .form-select {
+        border-color: #2b2b40;
+        background-color: #1e1e2d;
+        color: #fff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: #1e1e2d;
+        color: #fff;
+    }
+
+    .bg-white {
+        background-color: #1e1e2d !important;
+    }
+
+    .text-muted {
+        color: #92929f !important;
+    }
+
+    #mobileMenu {
+        background-color: rgba(30, 30, 45, 0.98);
+    }
+
+    .navbar-toggler {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.7%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .max-w-400px {
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 모바일 메뉴 토글 버튼 이벤트
+    const toggleButton = document.querySelector('.navbar-toggler');
+    const mobileMenu = document.querySelector('#mobileMenu');
+    const closeButton = document.querySelector('.btn-close');
+    
+    if (toggleButton && mobileMenu) {
+        toggleButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('show');
+        });
+    }
+
+    if (closeButton && mobileMenu) {
+        closeButton.addEventListener('click', function() {
+            mobileMenu.classList.remove('show');
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from .. import models, schemas, database, auth
+from ..core import database, auth
+from .. import models, schemas
 
 router = APIRouter(
     prefix="/api/users",
@@ -34,7 +35,7 @@ async def create_user(
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
     # 관리자만 사용자 생성 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="권한이 없습니다."
@@ -67,7 +68,7 @@ async def update_user(
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
     # 관리자이거나 자신의 정보만 수정 가능
-    if current_user.role != models.UserRole.ADMIN and current_user.id != user_id:
+    if not current_user.is_superuser and current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="권한이 없습니다."
@@ -112,7 +113,7 @@ async def delete_user(
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
     # 관리자만 삭제 가능
-    if current_user.role != models.UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="권한이 없습니다."
@@ -125,4 +126,38 @@ async def delete_user(
     db.delete(user)
     db.commit()
     
-    return {"message": "사용자가 삭제되었습니다."} 
+    return {"message": "사용자가 삭제되었습니다."}
+
+@router.get("/pending", response_model=List[schemas.UserResponse])
+async def get_pending_users(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    """승인 대기 중인 사용자 목록 조회"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="관리자만 접근할 수 있습니다."
+        )
+    
+    users = db.query(models.User).filter(
+        models.User.is_approved == 0
+    ).order_by(models.User.created_at.desc()).all()
+    return users
+
+@router.get("/approved", response_model=List[schemas.UserResponse])
+async def get_approved_users(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    """승인된 사용자 목록 조회"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="관리자만 접근할 수 있습니다."
+        )
+    
+    users = db.query(models.User).filter(
+        models.User.is_approved == 1
+    ).order_by(models.User.created_at.desc()).all()
+    return users 

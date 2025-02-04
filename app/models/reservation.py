@@ -1,20 +1,11 @@
 from datetime import datetime, date
-from enum import Enum
+from app.models.enums import ReservationStatus
 
 from sqlalchemy import Boolean, Column, DateTime, Date, ForeignKey, Integer, String, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.database import Base
-
-class ReservationStatus(str, Enum):
-    """예약 상태"""
-    PENDING = "PENDING"      # 대기중
-    APPROVED = "APPROVED"    # 승인됨
-    REJECTED = "REJECTED"    # 거절됨
-    IN_USE = "IN_USE"       # 사용중
-    COMPLETED = "COMPLETED"  # 완료됨
-    CANCELLED = "CANCELLED"  # 취소됨
+from app.core.database import Base
 
 class Reservation(Base):
     """예약 모델"""

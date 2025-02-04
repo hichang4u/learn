@@ -132,16 +132,78 @@ document.addEventListener('DOMContentLoaded', loadUserInfo);
     border-right: 1px solid var(--bs-border-color);
     width: 280px;
     position: fixed;
-    left: 0;
+    left: -280px;  /* 기본적으로 숨김 */
     top: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: 1100;
     overflow-y: auto;
+    transition: left 0.3s ease;
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        left: 0;  /* 데스크톱에서는 항상 표시 */
+    }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        background-color: #1e1e2d;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-brand .logo-text {
+        color: #fff;
+    }
+
+    .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .nav-link:hover {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-section-title {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .user-name {
+        color: #fff;
+    }
+
+    .sidebar-footer {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 .sidebar-brand {
     padding: 1rem;
     border-bottom: 1px solid var(--bs-border-color);
+    display: flex;
+    align-items: center;
+    height: 70px;  /* 모바일 헤더와 높이 맞추기 */
+}
+
+.sidebar-brand .logo-text {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -1px;
+    color: #ff6b00;
+}
+
+.sidebar-brand .highlight {
+    color: var(--primary-color);
+}
+
+/* 반응형 로고 크기 조정 */
+@media (max-width: 576px) {
+    .sidebar-brand .logo-text {
+        font-size: 2rem;
+    }
 }
 
 .nav-section {
@@ -220,17 +282,6 @@ document.addEventListener('DOMContentLoaded', loadUserInfo);
 .user-session {
     font-size: 0.75rem;
     color: var(--bs-gray-600);
-}
-
-@media (max-width: 991.98px) {
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-    }
-
-    .sidebar.show {
-        transform: translateX(0);
-    }
 }
 
 .sidebar-user {

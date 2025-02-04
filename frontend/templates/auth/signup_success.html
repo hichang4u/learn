@@ -1,0 +1,90 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}회원가입 완료{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100">
+    <div class="row h-100">
+        <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center bg-white">
+            <div class="text-center p-4" style="max-width: 450px;">
+                <h1 class="logo-text mb-4">LE<span class="highlight">A</span>RN</h1>
+                <div class="success-icon mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="mb-4">회원가입이 완료되었습니다</h2>
+                <p class="text-muted mb-4">{{ message }}</p>
+                <a href="/login" class="btn btn-primary">로그인 페이지로 이동</a>
+            </div>
+        </div>
+        
+        <!-- 오른쪽 이미지/배경 -->
+        <div class="col-lg-6 d-none d-lg-block position-relative overflow-hidden">
+            <div class="position-absolute w-100 h-100 login-bg"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --primary-color: #009ef7;
+    --primary-hover: #0095e8;
+}
+
+.logo-text {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.logo-text .highlight {
+    color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.login-bg {
+    background-image: url('/static/images/signup-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.login-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(0, 158, 247, 0.3),
+        rgba(255, 255, 255, 0.1)
+    );
+    backdrop-filter: brightness(0.95);
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .bg-white {
+        background-color: #1e1e2d !important;
+    }
+
+    .text-muted {
+        color: #92929f !important;
+    }
+}
+</style>
+{% endblock %}

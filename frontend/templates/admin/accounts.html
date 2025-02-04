@@ -3,92 +3,94 @@
 {% block title %}계정 관리{% endblock %}
 
 {% block main_content %}
-<main>
-    <div class="container-fluid px-4">
-        <h1 class="mt-4">계정 관리</h1>
-        
-        <!-- 플랫폼 필터 및 계정 추가 버튼 -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <select class="form-select" id="platformFilter">
-                    <option value="">모든 플랫폼</option>
-                </select>
-            </div>
-            <div class="col-md-8 text-end">
-                <button type="button" class="btn btn-primary" onclick="openAddAccountModal()">
-                    <i class="fas fa-plus"></i> 계정 추가
-                </button>
-            </div>
-        </div>
+<div class="content-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">계정 관리</h1>
+        <button type="button" class="btn btn-primary" onclick="openAddAccountModal()">
+            <i class="fas fa-plus"></i> 계정 추가
+        </button>
+    </div>
+    
+    <!-- 플랫폼 필터 -->
+    <div class="mb-4">
+        <select class="form-select" id="platformFilter">
+            <option value="">모든 플랫폼</option>
+        </select>
+    </div>
 
-        <!-- 계정 목록 테이블 -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <table class="table">
+    <!-- 계정 목록 -->
+    <div class="card border-0">
+        <div class="card-body p-0">
+            <!-- 데스크톱용 테이블 뷰 -->
+            <div class="table-responsive d-none d-lg-block">
+                <table class="table mb-0">
                     <thead>
                         <tr>
-                            <th>플랫폼</th>
-                            <th>계정ID</th>
-                            <th>비밀번호</th>
-                            <th>메모</th>
-                            <th>상태</th>
-                            <th>생성일</th>
-                            <th>수정일</th>
-                            <th>관리</th>
+                            <th style="width: 15%">플랫폼</th>
+                            <th style="width: 20%">계정ID</th>
+                            <th style="width: 15%">비밀번호</th>
+                            <th style="width: 20%">메모</th>
+                            <th style="width: 10%">상태</th>
+                            <th style="width: 20%">관리</th>
                         </tr>
                     </thead>
-                    <tbody id="accountList">
+                    <tbody id="accountTableList">
                         <!-- 계정 목록이 여기에 동적으로 추가됩니다 -->
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
 
-    <!-- 계정 추가/수정 모달 -->
-    <div class="modal fade" id="accountModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="accountModalTitle">계정 추가</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="accountForm">
-                        <input type="hidden" id="accountId">
-                        <div class="mb-3">
-                            <label for="platform" class="form-label">플랫폼</label>
-                            <select class="form-select" id="platform" required>
-                                <!-- 플랫폼 목록이 여기에 동적으로 추가됩니다 -->
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">계정ID</label>
-                            <input type="text" class="form-control" id="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">비밀번호</label>
-                            <input type="text" class="form-control" id="password">
-                            <div class="form-text">수정 시 비워두면 기존 비밀번호가 유지됩니다.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="memo" class="form-label">메모</label>
-                            <textarea class="form-control" id="memo" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="isActive" checked>
-                            <label class="form-check-label" for="isActive">활성화</label>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" onclick="saveAccount()">저장</button>
-                </div>
+            <!-- 모바일용 카드 뷰 -->
+            <div class="d-block d-lg-none" id="accountCardList">
+                <!-- 계정 카드 목록이 여기에 동적으로 추가됩니다 -->
             </div>
         </div>
     </div>
-</main>
+</div>
+
+<!-- 계정 추가/수정 모달 -->
+<div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="accountModalTitle">계정 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="accountForm">
+                    <input type="hidden" id="accountId">
+                    <div class="mb-3">
+                        <label for="platform" class="form-label">플랫폼</label>
+                        <select class="form-select" id="platform" required>
+                            <!-- 플랫폼 목록이 여기에 동적으로 추가됩니다 -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">계정ID</label>
+                        <input type="text" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">비밀번호</label>
+                        <input type="text" class="form-control" id="password">
+                        <div class="form-text">수정 시 비워두면 기존 비밀번호가 유지됩니다.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="memo" class="form-label">메모</label>
+                        <textarea class="form-control" id="memo" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">활성화</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="saveAccount()">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 토스트 메시지 -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -100,9 +102,194 @@
     </div>
 </div>
 
-{% endblock %}
+<style>
+/* 컨텐츠 래퍼 스타일 */
+.content-wrapper {
+    width: 100%;
+    padding: 1.5rem;
+    margin: 0;
+}
 
-{% block scripts %}
+/* 카드 스타일 */
+.card {
+    width: 100%;
+    background: var(--bs-white);
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+.table-responsive {
+    width: 100%;
+}
+
+.table {
+    width: 100% !important;
+}
+
+/* 계정 카드 스타일 */
+.account-card {
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    background: var(--bs-white);
+}
+
+.account-card:last-child {
+    border-bottom: none;
+}
+
+.account-card .platform-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.account-card .platform-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    margin-right: 0.75rem;
+}
+
+.account-card .info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.75rem;
+}
+
+.account-card .info-label {
+    color: var(--bs-gray-600);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.account-card .info-value {
+    font-size: 0.9375rem;
+    word-break: break-all;
+}
+
+.account-card .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 0;
+    }
+
+    .content-wrapper > .d-flex {
+        padding: 1rem;
+        margin-bottom: 0;
+        background-color: var(--bs-white);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .content-wrapper > .mb-4 {
+        padding: 0.75rem 1rem;
+        background-color: var(--bs-white);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: var(--bs-light);
+    }
+    
+    .account-card {
+        margin: 0.5rem 1rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--bs-border-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .account-card:first-child {
+        margin-top: 1rem;
+    }
+
+    .account-card:last-child {
+        margin-bottom: 1rem;
+    }
+
+    .account-card .platform-info {
+        margin-bottom: 0.75rem;
+    }
+
+    .account-card .info-row {
+        padding: 0.5rem;
+        background-color: var(--bs-white);
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .account-card .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-card .info-value {
+        font-size: 0.9375rem;
+        color: var(--bs-gray-900);
+    }
+
+    .account-card .actions {
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .account-card .actions .btn {
+        flex: 1;
+        padding: 0.5rem;
+    }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .content-wrapper > .d-flex,
+    .content-wrapper > .mb-4 {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .card {
+        background: var(--bs-dark);
+    }
+    
+    .account-card {
+        background: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .account-card .platform-info,
+    .account-card .actions {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .account-card .info-label {
+        color: var(--bs-gray-400);
+    }
+
+    .account-card .info-value {
+        color: var(--bs-white);
+    }
+
+    @media (max-width: 768px) {
+        .account-card .info-row {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    }
+}
+</style>
+
 <script>
 let accountModal;
 let toast;
@@ -150,17 +337,23 @@ async function loadAccounts() {
         const platformId = document.getElementById('platformFilter').value;
         const url = `/api/accounts${platformId ? `?platform_id=${platformId}` : ''}`;
         const response = await fetch(url, {
-            credentials: 'include'  // 세션 쿠키 포함
+            credentials: 'include'
         });
         const accounts = await response.json();
         
-        const tbody = document.getElementById('accountList');
-        tbody.innerHTML = '';
-        
-        accounts.forEach(account => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${account.platform.name}</td>
+        // 테이블 뷰 업데이트
+        const tbody = document.getElementById('accountTableList');
+        tbody.innerHTML = accounts.map(account => `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <img src="${account.platform.logo || '/static/img/default-platform.png'}" 
+                             alt="${account.platform.name}"
+                             class="me-2"
+                             style="width: 24px; height: 24px; object-fit: contain;">
+                        ${account.platform.name}
+                    </div>
+                </td>
                 <td>${account.email}</td>
                 <td>${account.password || ''}</td>
                 <td>${account.memo || ''}</td>
@@ -169,8 +362,6 @@ async function loadAccounts() {
                         ${account.is_active ? '활성' : '비활성'}
                     </span>
                 </td>
-                <td>${new Date(account.created_at).toLocaleString()}</td>
-                <td>${account.updated_at ? new Date(account.updated_at).toLocaleString() : ''}</td>
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="editAccount(${account.id})">
                         <i class="fas fa-edit"></i>
@@ -179,9 +370,47 @@ async function loadAccounts() {
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
-            `;
-            tbody.appendChild(tr);
-        });
+            </tr>
+        `).join('');
+
+        // 카드 뷰 업데이트
+        const cardList = document.getElementById('accountCardList');
+        cardList.innerHTML = accounts.map(account => `
+            <div class="account-card">
+                <div class="platform-info">
+                    <img src="${account.platform.logo || '/static/img/default-platform.png'}" 
+                         alt="${account.platform.name}"
+                         class="platform-logo">
+                    <strong>${account.platform.name}</strong>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">계정ID</span>
+                    <span class="info-value">${account.email}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">비밀번호</span>
+                    <span class="info-value">${account.password || ''}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">상태</span>
+                    <span class="badge ${account.is_active ? 'bg-success' : 'bg-danger'}">
+                        ${account.is_active ? '활성' : '비활성'}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">메모</span>
+                    <span class="info-value text-muted">${account.memo || '-'}</span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="editAccount(${account.id})">
+                        <i class="fas fa-edit"></i> 수정
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteAccount(${account.id})">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        `).join('');
     } catch (error) {
         showToast('계정 목록을 불러오는데 실패했습니다: ' + error.message, 'danger');
     }

@@ -1,4 +1,4 @@
-{% extends "layout/base.html" %}
+{% extends 'layout/base.html' %}
 
 {% block title %}로그인{% endblock %}
 
@@ -17,6 +17,7 @@
 
                 <!-- 로그인 폼 -->
                 <form id="loginForm" onsubmit="handleLogin(event)">
+                    <input type="hidden" name="grant_type" value="password">
                     <div class="mb-3">
                         <label for="email" class="form-label">이메일</label>
                         <input type="email" class="form-control" id="email" name="username" required>
@@ -33,6 +34,9 @@
                         <button type="submit" class="btn btn-primary">로그인</button>
                     </div>
                 </form>
+                <div class="text-center mt-3">
+                    <p>계정이 없으신가요? <a href="/signup">회원가입</a></p>
+                </div>
             </div>
         </div>
 
@@ -49,27 +53,102 @@ async function handleLogin(event) {
     
     const form = event.target;
     const formData = new FormData(form);
+    const submitButton = form.querySelector('button[type="submit"]');
     
     try {
+        // 버튼 비활성화 및 로딩 표시
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>로그인 중...';
+        
+        // 로그인 요청
         const response = await fetch('/api/auth/login', {
             method: 'POST',
-            body: formData,
-            credentials: 'include'  // 쿠키 포함
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            },
+            body: new URLSearchParams(formData),
+            credentials: 'include'  // 세션 쿠키를 위해 필수
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || '로그인에 실패했습니다.');
+            let errorMessage = '로그인에 실패했습니다.';
+            
+            if (result.detail) {
+                switch (result.detail) {
+                    case 'Incorrect email or password':
+                        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+                        break;
+                    case 'Inactive user':
+                        errorMessage = '비활성화된 계정입니다. 관리자에게 문의하세요.';
+                        break;
+                    case 'Not approved':
+                        errorMessage = '승인 대기 중인 계정입니다. 관리자의 승인을 기다려주세요.';
+                        break;
+                    default:
+                        errorMessage = result.detail;
+                }
+            }
+            
+            throw new Error(errorMessage);
         }
         
-        const data = await response.json();
+        // 리다이렉트 처리
+        const returnUrl = new URLSearchParams(window.location.search).get('return_url');
+        window.location.href = returnUrl || '/';
         
-        // 로그인 성공 후 메인 페이지로 이동
-        window.location.href = '/';
     } catch (error) {
-        alert(error.message);
+        console.error('로그인 처리 중 오류:', error);
+        
+        // 오류 메시지 표시
+        const errorDiv = document.getElementById('loginError') || createErrorDiv();
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+        
+    } finally {
+        // 버튼 상태 복원
+        submitButton.disabled = false;
+        submitButton.innerHTML = '로그인';
     }
 }
+
+// 오류 메시지 표시를 위한 div 생성
+function createErrorDiv() {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'loginError';
+    errorDiv.className = 'alert alert-danger mt-3';
+    errorDiv.style.display = 'none';
+    
+    const form = document.getElementById('loginForm');
+    form.parentNode.insertBefore(errorDiv, form.nextSibling);
+    
+    return errorDiv;
+}
+
+// 페이지 로드 시 이전 오류 메시지 제거
+document.addEventListener('DOMContentLoaded', async () => {
+    const errorDiv = document.getElementById('loginError');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+    
+    // 이미 로그인된 경우 메인 페이지로 리다이렉트
+    try {
+        const response = await fetch('/api/auth/me', {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const currentPath = window.location.pathname;
+            if (currentPath === '/login') {
+                window.location.href = '/';
+            }
+        }
+    } catch (error) {
+        console.error('세션 체크 실패:', error);
+    }
+});
 </script>
 {% endblock %}
 

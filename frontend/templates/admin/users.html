@@ -3,210 +3,868 @@
 {% block title %}사용자 관리{% endblock %}
 
 {% block main_content %}
-<main>
-    <div class="container-fluid px-4">
-        <h1 class="mt-4">사용자 관리</h1>
-        
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-users me-1"></i>
-                사용자 목록
-            </div>
-            <div class="card-body">
-                <table id="usersTable" class="table table-bordered">
+<div class="content-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">사용자 관리</h1>
+    </div>
+
+    <!-- 승인 대기 사용자 -->
+    <div class="card border-0 mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">승인 대기 사용자</h5>
+        </div>
+        <div class="card-body p-0">
+            <!-- 데스크톱용 테이블 뷰 -->
+            <div class="table-responsive d-none d-lg-block">
+                <table class="table mb-0">
                     <thead>
                         <tr>
-                            <th>이름</th>
-                            <th>이메일</th>
-                            <th>직급</th>
-                            <th>관리자</th>
-                            <th>상태</th>
-                            <th>가입일</th>
-                            <th>관리</th>
+                            <th style="width: 25%">이메일</th>
+                            <th style="width: 20%">이름</th>
+                            <th style="width: 15%">직급</th>
+                            <th style="width: 20%">가입일</th>
+                            <th style="width: 20%">작업</th>
                         </tr>
                     </thead>
-                    <tbody id="usersList">
+                    <tbody id="pendingUsersList">
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
 
-    <!-- 사용자 수정 모달 -->
-    <div class="modal fade" id="userModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">사용자 정보 수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="userForm">
-                        <input type="hidden" id="userId">
-                        <div class="mb-3">
-                            <label for="fullName" class="form-label">이름</label>
-                            <input type="text" class="form-control" id="fullName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">이메일</label>
-                            <input type="email" class="form-control" id="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="position" class="form-label">직급</label>
-                            <select class="form-select" id="position" required>
-                                <option value="사원">사원</option>
-                                <option value="대리">대리</option>
-                                <option value="과장">과장</option>
-                                <option value="차장">차장</option>
-                                <option value="부장">부장</option>
-                                <option value="이사">이사</option>
-                                <option value="상무">상무</option>
-                                <option value="전무">전무</option>
-                                <option value="대표">대표</option>
-                            </select>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="isSuperuser">
-                            <label class="form-check-label" for="isSuperuser">관리자 권한</label>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="isActive">
-                            <label class="form-check-label" for="isActive">활성 상태</label>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUser()">저장</button>
-                </div>
+            <!-- 모바일용 카드 뷰 -->
+            <div class="d-block d-lg-none" id="pendingUsersCardList">
             </div>
         </div>
     </div>
 
-    <!-- 토스트 메시지 -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    <!-- 승인된 사용자 -->
+    <div class="card border-0">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">승인된 사용자</h5>
+        </div>
+        <div class="card-body p-0">
+            <!-- 데스크톱용 테이블 뷰 -->
+            <div class="table-responsive d-none d-lg-block">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">이메일</th>
+                            <th style="width: 15%">이름</th>
+                            <th style="width: 15%">직급</th>
+                            <th style="width: 15%">가입일</th>
+                            <th style="width: 15%">상태</th>
+                            <th style="width: 20%">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="approvedUsersList">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 모바일용 카드 뷰 -->
+            <div class="d-block d-lg-none" id="approvedUsersCardList">
             </div>
         </div>
     </div>
-</main>
+</div>
 
-{% endblock %}
+<!-- 사용자 수정 모달 -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">사용자 정보 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">이름</label>
+                        <input type="text" class="form-control" id="fullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">이메일</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="position" class="form-label">직급</label>
+                        <select class="form-select" id="position" required>
+                            <option value="STAFF">사원</option>
+                            <option value="DEPUTY_MANAGER">대리</option>
+                            <option value="MANAGER">과장</option>
+                            <option value="DEPUTY_HEAD">차장</option>
+                            <option value="HEAD">부장</option>
+                            <option value="DIRECTOR">이사</option>
+                            <option value="MANAGING">상무</option>
+                            <option value="VICE">전무</option>
+                            <option value="CEO">대표</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isSuperuser">
+                        <label class="form-check-label" for="isSuperuser">관리자 권한</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isActive">
+                        <label class="form-check-label" for="isActive">활성 상태</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% block scripts %}
+<!-- 토스트 메시지 -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 컨텐츠 래퍼 스타일 */
+.content-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem;
+    margin: 0;
+    background-color: var(--bs-body-bg);
+}
+
+/* 카드 스타일 */
+.card {
+    width: 100%;
+    background: var(--bs-body-bg);
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+.table-responsive {
+    width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    width: 100% !important;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.table th {
+    background-color: var(--bs-light);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+}
+
+/* 사용자 카드 스타일 */
+.user-card {
+    padding: 1.5rem;
+    border: 1px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-card:last-child {
+    margin-bottom: 0;
+}
+
+.user-card .info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--bs-light);
+    border-radius: 0.5rem;
+}
+
+.user-card .info-label {
+    color: var(--bs-gray-600);
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.user-card .info-value {
+    font-size: 1rem;
+    color: var(--bs-body-color);
+    word-break: break-word;
+}
+
+.user-card .actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* 반응형 조정 */
+@media (max-width: 1200px) {
+    .content-wrapper {
+        padding: 1.5rem;
+    }
+
+    .table td, .table th {
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .content-wrapper {
+        padding: 1.25rem;
+    }
+
+    .card-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .user-card {
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: none;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        padding: 1rem;
+    }
+
+    .user-card {
+        margin: 0.75rem 0;
+        padding: 1rem;
+    }
+
+    .user-card .info-row {
+        padding: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .user-card .actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.625rem 1rem;
+    }
+
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+
+    .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-wrapper {
+        padding: 0.75rem;
+    }
+
+    h1.h3 {
+        font-size: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+    }
+
+    .user-card .info-label {
+        font-size: 0.75rem;
+    }
+
+    .user-card .info-value {
+        font-size: 0.9375rem;
+    }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .content-wrapper {
+        background-color: var(--bs-dark);
+    }
+
+    .card {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .table th {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .user-card {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .user-card .info-row {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .user-card .info-label {
+        color: var(--bs-gray-400);
+    }
+
+    .user-card .info-value {
+        color: var(--bs-light);
+    }
+
+    .modal-content {
+        background-color: var(--bs-dark);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-footer {
+        border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-control, .form-select {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--bs-light);
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: var(--bs-light);
+    }
+}
+</style>
+
 <script>
-    let userModal;
-    let toast;
+let userModal;
+let toast;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        userModal = new bootstrap.Modal(document.getElementById('userModal'));
-        toast = new bootstrap.Toast(document.getElementById('toast'));
-        loadUsers();
-    });
+// 직급 코드를 한글로 변환하는 함수
+function getPositionLabel(positionCode) {
+    const positionMap = {
+        'STAFF': '사원',
+        'DEPUTY_MANAGER': '대리',
+        'MANAGER': '과장',
+        'DEPUTY_HEAD': '차장',
+        'HEAD': '부장',
+        'DIRECTOR': '이사',
+        'MANAGING': '상무',
+        'VICE': '전무',
+        'CEO': '대표'
+    };
+    return positionMap[positionCode?.toUpperCase()] || positionCode || '';
+}
 
-    async function loadUsers() {
-        try {
-            const response = await fetch('/api/users/', {
-                headers: {
-                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
-                },
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('사용자 목록을 불러오는데 실패했습니다.');
-            
-            const users = await response.json();
-            const tbody = document.getElementById('usersList');
-            tbody.innerHTML = '';
-            
-            users.forEach(user => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${user.full_name}</td>
-                    <td>${user.email}</td>
-                    <td>${user.position}</td>
-                    <td>${user.is_superuser ? '<span class="badge bg-warning">관리자</span>' : ''}</td>
-                    <td>${user.is_active ? '<span class="badge bg-success">활성</span>' : '<span class="badge bg-danger">비활성</span>'}</td>
-                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">
-                            <i class="fas fa-edit"></i>
+// 401 에러 처리 함수 추가
+function handleUnauthorized() {
+    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    userModal = new bootstrap.Modal(document.getElementById('userModal'));
+    toast = new bootstrap.Toast(document.getElementById('toast'));
+    loadPendingUsers();
+    loadApprovedUsers();
+});
+
+async function loadPendingUsers() {
+    try {
+        const response = await fetch('/api/users?is_approved=false&is_active=false', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다.' }));
+            throw new Error(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData));
+        }
+        
+        const users = await response.json();
+        if (!Array.isArray(users)) {
+            throw new Error('서버에서 잘못된 데이터 형식을 반환했습니다.');
+        }
+
+        // 승인되지 않은 사용자만 필터링
+        const pendingUsers = users.filter(user => !user.is_approved && !user.is_active);
+
+        // 테이블 뷰 업데이트
+        const tbody = document.getElementById('pendingUsersList');
+        if (!tbody) return;
+
+        tbody.innerHTML = pendingUsers.map(user => `
+            <tr>
+                <td class="text-break">${escapeHtml(user.email || '')}</td>
+                <td class="text-break">${escapeHtml(user.full_name || '')}</td>
+                <td>${escapeHtml(getPositionLabel(user.position))}</td>
+                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm" onclick="approveUser(${user.id})">
+                            <i class="fas fa-check me-1"></i>승인
                         </button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectUser(${user.id})">
+                            <i class="fas fa-times me-1"></i>거부
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // 카드 뷰 업데이트
+        const cardList = document.getElementById('pendingUsersCardList');
+        if (!cardList) return;
+
+        cardList.innerHTML = pendingUsers.map(user => `
+            <div class="user-card">
+                <div class="info-row">
+                    <span class="info-label">이메일</span>
+                    <span class="info-value text-break">${escapeHtml(user.email || '')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">이름</span>
+                    <span class="info-value text-break">${escapeHtml(user.full_name || '')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">직급</span>
+                    <span class="info-value">${escapeHtml(getPositionLabel(user.position))}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">가입일</span>
+                    <span class="info-value">${user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-success w-100" onclick="approveUser(${user.id})">
+                        <i class="fas fa-check me-1"></i>승인
+                    </button>
+                    <button class="btn btn-danger w-100" onclick="rejectUser(${user.id})">
+                        <i class="fas fa-times me-1"></i>거부
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('승인 대기 사용자 목록 로딩 오류:', error);
+        showToast(error.message || '승인 대기 사용자 목록을 불러오는데 실패했습니다.', 'danger');
+        
+        // 오류 발생 시 빈 목록 표시
+        const tbody = document.getElementById('pendingUsersList');
+        const cardList = document.getElementById('pendingUsersCardList');
+        
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <p class="text-muted mb-0">데이터를 불러올 수 없습니다.</p>
                     </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) {
-            showToast(error.message, 'danger');
+                </tr>
+            `;
+        }
+        
+        if (cardList) {
+            cardList.innerHTML = `
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">데이터를 불러올 수 없습니다.</p>
+                </div>
+            `;
         }
     }
+}
 
-    async function editUser(userId) {
-        try {
-            const response = await fetch(`/api/users/${userId}`, {
-                headers: {
-                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
-                },
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('사용자 정보를 불러오는데 실패했습니다.');
-            
-            const user = await response.json();
-            
-            document.getElementById('userId').value = user.id;
-            document.getElementById('fullName').value = user.full_name;
-            document.getElementById('email').value = user.email;
-            document.getElementById('position').value = user.position;
-            document.getElementById('isSuperuser').checked = user.is_superuser;
-            document.getElementById('isActive').checked = user.is_active;
-            
-            userModal.show();
-        } catch (error) {
-            showToast(error.message, 'danger');
+async function loadApprovedUsers() {
+    try {
+        const response = await fetch('/api/users?is_approved=true', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다.' }));
+            throw new Error(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData));
+        }
+        
+        const users = await response.json();
+        if (!Array.isArray(users)) {
+            throw new Error('서버에서 잘못된 데이터 형식을 반환했습니다.');
+        }
+
+        // 승인된 사용자만 필터링
+        const approvedUsers = users.filter(user => user.is_approved);
+
+        // 테이블 뷰 업데이트
+        const tbody = document.getElementById('approvedUsersList');
+        if (!tbody) return;
+
+        tbody.innerHTML = approvedUsers.map(user => `
+            <tr>
+                <td class="text-break">${escapeHtml(user.email || '')}</td>
+                <td class="text-break">${escapeHtml(user.full_name || '')}</td>
+                <td>${escapeHtml(getPositionLabel(user.position))}</td>
+                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</td>
+                <td>
+                    <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                        ${user.is_active ? '활성' : '비활성'}
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="editUser(${user.id})">
+                            <i class="fas fa-edit me-1"></i>수정
+                        </button>
+                        ${!user.is_superuser ? `
+                            <button class="btn btn-warning btn-sm" onclick="toggleUserStatus(${user.id})">
+                                <i class="fas fa-power-off me-1"></i>${user.is_active ? '비활성화' : '활성화'}
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // 카드 뷰 업데이트
+        const cardList = document.getElementById('approvedUsersCardList');
+        if (!cardList) return;
+
+        cardList.innerHTML = approvedUsers.map(user => `
+            <div class="user-card">
+                <div class="info-row">
+                    <span class="info-label">이메일</span>
+                    <span class="info-value text-break">${escapeHtml(user.email || '')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">이름</span>
+                    <span class="info-value text-break">${escapeHtml(user.full_name || '')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">직급</span>
+                    <span class="info-value">${escapeHtml(getPositionLabel(user.position))}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">상태</span>
+                    <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'} fs-6">
+                        ${user.is_active ? '활성' : '비활성'}
+                    </span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary w-100" onclick="editUser(${user.id})">
+                        <i class="fas fa-edit me-1"></i>수정
+                    </button>
+                    ${!user.is_superuser ? `
+                        <button class="btn btn-warning w-100" onclick="toggleUserStatus(${user.id})">
+                            <i class="fas fa-power-off me-1"></i>${user.is_active ? '비활성화' : '활성화'}
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('승인된 사용자 목록 로딩 오류:', error);
+        showToast(error.message || '승인된 사용자 목록을 불러오는데 실패했습니다.', 'danger');
+        
+        // 오류 발생 시 빈 목록 표시
+        const tbody = document.getElementById('approvedUsersList');
+        const cardList = document.getElementById('approvedUsersCardList');
+        
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <p class="text-muted mb-0">데이터를 불러올 수 없습니다.</p>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        if (cardList) {
+            cardList.innerHTML = `
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">데이터를 불러올 수 없습니다.</p>
+                </div>
+            `;
         }
     }
+}
 
-    async function saveUser() {
-        try {
-            const userId = document.getElementById('userId').value;
-            const userData = {
-                full_name: document.getElementById('fullName').value,
-                email: document.getElementById('email').value,
-                position: document.getElementById('position').value,
-                is_superuser: document.getElementById('isSuperuser').checked,
-                is_active: document.getElementById('isActive').checked
-            };
+async function editUser(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || '사용자 정보를 불러오는데 실패했습니다.');
+        }
+        
+        const user = await response.json();
+        
+        document.getElementById('userId').value = user.id;
+        document.getElementById('fullName').value = user.full_name || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('position').value = user.position?.toLowerCase() || 'staff';
+        document.getElementById('isSuperuser').checked = user.is_superuser || false;
+        document.getElementById('isActive').checked = user.is_active || false;
+        
+        userModal.show();
+    } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+        showToast(error.message, 'danger');
+    }
+}
 
-            const response = await fetch(`/api/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
-                },
-                credentials: 'include',
-                body: JSON.stringify(userData)
-            });
+async function saveUser() {
+    try {
+        const userId = document.getElementById('userId').value;
+        const userData = {
+            full_name: document.getElementById('fullName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            position: document.getElementById('position').value,
+            is_superuser: document.getElementById('isSuperuser').checked,
+            is_active: document.getElementById('isActive').checked,
+            is_approved: true,
+            password: null
+        };
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || '사용자 정보 수정에 실패했습니다.');
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include',
+            body: JSON.stringify(userData)
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            let errorMessage = '사용자 정보 수정에 실패했습니다.';
+            
+            if (errorData.detail) {
+                if (typeof errorData.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData.detail)) {
+                    // Pydantic 검증 오류 처리
+                    errorMessage = errorData.detail.map(err => 
+                        `${err.loc.join('.')}:${err.msg}`
+                    ).join('\n');
+                } else if (typeof errorData.detail === 'object') {
+                    errorMessage = Object.entries(errorData.detail)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join('\n');
+                }
             }
-
-            userModal.hide();
-            showToast('사용자 정보가 수정되었습니다.', 'success');
-            loadUsers();
-        } catch (error) {
-            showToast(error.message, 'danger');
+            
+            throw new Error(errorMessage);
         }
-    }
 
-    function showToast(message, type = 'success') {
-        const toastElement = document.getElementById('toast');
-        toastElement.className = `toast align-items-center text-white bg-${type} border-0`;
-        toastElement.querySelector('.toast-body').textContent = message;
-        toast.show();
+        userModal.hide();
+        showToast('사용자 정보가 수정되었습니다.', 'success');
+        await loadApprovedUsers();
+    } catch (error) {
+        console.error('사용자 정보 수정 실패:', error);
+        showToast(error.message, 'danger');
     }
+}
+
+async function toggleUserStatus(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ is_active: true })
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다.' }));
+            throw new Error(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData));
+        }
+
+        showToast('사용자 상태가 변경되었습니다.', 'success');
+        await loadPendingUsers();
+        await loadApprovedUsers();
+    } catch (error) {
+        console.error('사용자 상태 변경 실패:', error);
+        showToast(error.message || '사용자 상태 변경에 실패했습니다.', 'danger');
+    }
+}
+
+async function approveUser(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                is_approved: true,
+                is_active: true
+            })
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다.' }));
+            throw new Error(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData));
+        }
+
+        showToast('사용자가 승인되었습니다.', 'success');
+        await loadPendingUsers();
+        await loadApprovedUsers();
+    } catch (error) {
+        console.error('사용자 승인 실패:', error);
+        showToast(error.message || '사용자 승인에 실패했습니다.', 'danger');
+    }
+}
+
+async function rejectUser(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                is_approved: false,
+                is_active: false
+            })
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: '알 수 없는 오류가 발생했습니다.' }));
+            throw new Error(typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData));
+        }
+
+        showToast('사용자가 거부되었습니다.', 'success');
+        await loadPendingUsers();
+        await loadApprovedUsers();
+    } catch (error) {
+        console.error('사용자 거부 실패:', error);
+        showToast(error.message || '사용자 거부에 실패했습니다.', 'danger');
+    }
+}
+
+function showToast(message, type = 'success') {
+    const toastElement = document.getElementById('toast');
+    toastElement.className = `toast align-items-center text-white bg-${type} border-0`;
+    toastElement.querySelector('.toast-body').textContent = message;
+    toast.show();
+}
+
+// HTML 이스케이프 함수 추가
+function escapeHtml(unsafe) {
+    if (unsafe == null) return '';
+    return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 </script>
-{% endblock %} 
+{% endblock %}

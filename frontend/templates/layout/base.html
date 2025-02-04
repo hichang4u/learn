@@ -46,42 +46,177 @@
     
     <!-- 공통 스크립트 -->
     <script>
-    // 사이드바 토글 기능
-    function toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const content = document.querySelector('.content');
+    // 전역 사이드바 상태 관리
+    const sidebarState = {
+        isOpen: window.innerWidth >= 992, // 데스크톱에서는 기본적으로 열림
         
-        if (sidebar && content) {
-            const isShow = sidebar.classList.contains('show');
-            sidebar.classList.toggle('show');
-            content.classList.toggle('sidebar-show');
+        toggle() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            const content = document.querySelector('.content');
             
-            // 모바일에서 사이드바가 열릴 때 스크롤 방지
+            this.isOpen = !this.isOpen;
+            
             if (window.innerWidth < 992) {
-                document.body.style.overflow = !isShow ? 'hidden' : '';
+                // 모바일
+                sidebar?.classList.toggle('show');
+                backdrop?.classList.toggle('show');
+                if (content) {
+                    content.style.marginLeft = this.isOpen ? '280px' : '0';
+                }
+                // 모바일에서 사이드바가 열릴 때 스크롤 방지
+                document.body.style.overflow = this.isOpen ? 'hidden' : '';
             }
+        },
+        
+        close() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            const content = document.querySelector('.content');
+            
+            this.isOpen = false;
+            
+            sidebar?.classList.remove('show');
+            backdrop?.classList.remove('show');
+            if (content) {
+                content.style.marginLeft = '0';
+            }
+            document.body.style.overflow = '';
+        },
+        
+        // 화면 크기에 따른 상태 초기화
+        reset() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            const content = document.querySelector('.content');
+            
+            if (window.innerWidth >= 992) {
+                // 데스크톱
+                this.isOpen = true;
+                sidebar?.classList.remove('show');
+                backdrop?.classList.remove('show');
+                if (content) {
+                    content.style.marginLeft = '280px';
+                }
+                document.body.style.overflow = '';
+            } else {
+                // 모바일
+                if (!this.isOpen) {
+                    if (content) {
+                        content.style.marginLeft = '0';
+                    }
+                }
+            }
+        }
+    };
+
+    // 화면 크기 변경 시 사이드바 상태 조정
+    window.addEventListener('resize', () => sidebarState.reset());
+
+    // 오류 페이지로 이동하는 함수
+    function redirectToError(code, title, message, showLogin = false) {
+        const params = new URLSearchParams({
+            error_code: code,
+            error_title: title,
+            error_message: message,
+            show_login: showLogin
+        });
+        window.location.href = `/error?${params.toString()}`;
+    }
+
+    // API 요청 시 공통 옵션 설정
+    async function fetchWithAuth(url, options = {}) {
+        const defaultOptions = {
+            credentials: 'include',  // 세션 쿠키 전송을 위해 필수
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+
+        // options 병합
+        const finalOptions = {
+            ...defaultOptions,
+            ...options,
+            headers: {
+                ...defaultOptions.headers,
+                ...(options.headers || {})
+            }
+        };
+
+        try {
+            const response = await fetch(url, finalOptions);
+            
+            if (response.status === 401) {
+                // 인증되지 않은 경우 로그인 페이지로 리다이렉션
+                const currentPath = window.location.pathname + window.location.search;
+                if (!currentPath.startsWith('/login')) {
+                    window.location.href = `/login?return_url=${encodeURIComponent(currentPath)}`;
+                }
+                return null;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('API 요청 오류:', error);
+            throw error;
         }
     }
 
-    // 화면 크기가 변경될 때 사이드바 상태 조정
-    window.addEventListener('resize', function() {
-        const sidebar = document.querySelector('.sidebar');
-        if (window.innerWidth >= 992) {  // lg 브레이크포인트
-            sidebar.classList.remove('show');
-            document.querySelector('.content')?.classList.remove('sidebar-show');
-            document.body.style.overflow = '';
+    // 관리자 권한 체크 함수
+    async function isAdmin() {
+        try {
+            const response = await fetchWithAuth('/api/auth/me');
+            if (!response) return false;
+            
+            const userData = await response.json();
+            return userData.is_superuser === true || userData.role === 'admin';
+        } catch (error) {
+            console.error('관리자 권한 체크 실패:', error);
+            return false;
+        }
+    }
+
+    // 페이지 로드 시 권한 체크
+    document.addEventListener('DOMContentLoaded', async () => {
+        const currentPath = window.location.pathname;
+        
+        // 공개 페이지 목록
+        const publicPages = ['/login', '/signup', '/error'];
+        
+        // 공개 페이지가 아닌 경우에만 권한 체크
+        if (!publicPages.some(page => currentPath.startsWith(page))) {
+            try {
+                const response = await fetchWithAuth('/api/auth/me');
+                if (!response) {
+                    return; // 401 에러시 이미 리다이렉션 처리됨
+                }
+                
+                const userData = await response.json();
+                
+                // 관리자 전용 페이지 체크
+                if (currentPath.startsWith('/admin') && !userData.is_superuser) {
+                    window.location.href = '/error?code=403';
+                    return;
+                }
+            } catch (error) {
+                console.error('권한 체크 오류:', error);
+            }
         }
     });
 
     // 로그아웃 처리
     async function handleLogout() {
         try {
-            const response = await fetch('/api/auth/logout', {
+            const response = await fetchWithAuth('/api/auth/logout', {
                 method: 'POST',
-                credentials: 'same-origin'
+                credentials: 'include'
             });
             
-            if (response.ok) {
+            if (response && response.ok) {
                 window.location.href = '/login';
             }
         } catch (error) {

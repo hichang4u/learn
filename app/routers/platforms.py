@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Annotated, List
 import logging
-from .. import models, schemas, database, dependencies, crud
+from ..core import database
+from .. import models, schemas, dependencies, crud
 
 # 로거 설정
 logger = logging.getLogger(__name__)

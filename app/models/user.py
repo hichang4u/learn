@@ -1,22 +1,9 @@
-from datetime import datetime
-from enum import Enum
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Enum as SQLAlchemyEnum
-from sqlalchemy.sql import func
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
-from app.database import Base
-
-class Position(str, Enum):
-    """사용자 직급"""
-    사원 = "사원"
-    대리 = "대리"
-    과장 = "과장"
-    차장 = "차장"
-    부장 = "부장"
-    이사 = "이사"
-    상무 = "상무"
-    전무 = "전무"
-    대표 = "대표"
+from app.core.database import Base
+from app.models.enums import Position
 
 class User(Base):
     """사용자 모델"""
@@ -26,11 +13,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
-    position = Column(SQLAlchemyEnum(Position), nullable=True)
+    position = Column(Enum(Position), nullable=False, default=Position.STAFF)
     is_active = Column(Boolean, default=True, nullable=False)
-    is_superuser = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=False, nullable=False)
+    is_superuser = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    reservations = relationship("Reservation", back_populates="user", cascade="all, delete-orphan") 
+    reservations = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")

@@ -1,16 +1,18 @@
 from datetime import datetime, date
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
-from app.models import ReservationStatus
+from app.models.enums import ReservationStatus
 from .user import UserResponse
 from .account import AccountResponse
 
 class ReservationBase(BaseModel):
     """예약 기본 스키마"""
+    account_id: int
     start_date: date
     end_date: date
+    status: ReservationStatus = ReservationStatus.PENDING
     memo: Optional[str] = None
 
 class ReservationCreate(ReservationBase):
@@ -35,6 +37,15 @@ class ReservationResponse(ReservationBase):
 
     class Config:
         from_attributes = True
+
+    @validator('status', pre=True)
+    def normalize_status(cls, v):
+        # DB에서 대문자로 저장된 상태 값을 소문자로 변환
+        if isinstance(v, str):
+            return v.lower()
+        if hasattr(v, 'value'):
+            return v.value.lower()
+        return v
 
 class ReservationStatusUpdate(BaseModel):
     """예약 상태 업데이트 스키마"""

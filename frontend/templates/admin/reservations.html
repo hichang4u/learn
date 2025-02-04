@@ -3,12 +3,12 @@
 {% block title %}신청 관리{% endblock %}
 
 {% block main_content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0">신청 관리</h2>
-        <div class="d-flex gap-2">
-            <select class="form-select" id="statusFilter">
-                <option value="">전체 상태</option>
+<div class="container-fluid py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <h2 class="h4 mb-0 flex-grow-1">신청 관리</h2>
+        <div class="d-flex flex-column flex-sm-row gap-2">
+            <select class="form-select form-select-sm" style="width: auto; min-width: 120px;" id="statusFilter">
+                <option value="">전체</option>
                 <option value="PENDING">대기중</option>
                 <option value="APPROVED">승인됨</option>
                 <option value="REJECTED">거절됨</option>
@@ -16,14 +16,15 @@
                 <option value="COMPLETED">완료됨</option>
                 <option value="CANCELLED">취소됨</option>
             </select>
-            <button class="btn btn-outline-secondary" onclick="refreshList()">
-                <i class="fas fa-sync-alt"></i>
+            <button class="btn btn-sm btn-outline-secondary" onclick="refreshList()">
+                <i class="fas fa-sync-alt me-1"></i>
                 새로고침
             </button>
         </div>
     </div>
 
-    <div class="card">
+    <!-- 데스크톱 뷰 -->
+    <div class="card d-none d-lg-block">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
@@ -47,11 +48,16 @@
             </div>
         </div>
     </div>
+
+    <!-- 모바일 뷰 -->
+    <div class="d-block d-lg-none" id="reservationCardList">
+        <!-- 예약 카드 목록이 여기에 동적으로 로드됩니다 -->
+    </div>
 </div>
 
 <!-- 상태 변경 모달 -->
 <div class="modal fade" id="statusChangeModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">신청 처리</h5>
@@ -85,42 +91,23 @@
     font-size: 0.75em;
     font-weight: 600;
     border-radius: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.5em;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.status-PENDING {
-    background-color: var(--bs-warning);
-    color: var(--bs-dark);
-}
-
-.status-APPROVED {
-    background-color: var(--bs-info);
-    color: var(--bs-white);
-}
-
-.status-IN_USE {
-    background-color: var(--bs-primary);
-    color: var(--bs-white);
-}
-
-.status-COMPLETED {
-    background-color: var(--bs-success);
-    color: var(--bs-white);
-}
-
-.status-REJECTED {
-    background-color: var(--bs-danger);
-    color: var(--bs-white);
-}
-
-.status-CANCELLED {
-    background-color: var(--bs-secondary);
-    color: var(--bs-white);
+.status-PENDING, .status-APPROVED, .status-IN_USE,
+.status-COMPLETED, .status-REJECTED, .status-CANCELLED {
+    background-color: transparent;
 }
 
 .user-info {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .platform-info {
@@ -134,12 +121,123 @@
     height: 24px;
     object-fit: contain;
 }
+
+/* 모바일 카드 스타일 */
+.reservation-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.reservation-card .info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--bs-light);
+    border-radius: 0.5rem;
+}
+
+.reservation-card .info-label {
+    color: var(--bs-gray-600);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.reservation-card .info-value {
+    font-size: 0.9375rem;
+}
+
+.reservation-card .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+
+    .reservation-card .actions {
+        flex-direction: column;
+    }
+
+    .reservation-card .actions .btn {
+        width: 100%;
+    }
+
+    .user-info {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .reservation-card {
+        background-color: var(--bs-dark);
+    }
+
+    .reservation-card .info-row {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .reservation-card .info-label {
+        color: var(--bs-gray-400);
+    }
+
+    .reservation-card .info-value {
+        color: var(--bs-light);
+    }
+}
 </style>
 
 <script>
 // 전역 변수 선언
 let selectedReservationId = null;
 let statusChangeModal = null;
+
+// 상태 enum 정의
+const ReservationStatus = {
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    IN_USE: 'in_use',
+    COMPLETED: 'completed',
+    REJECTED: 'rejected',
+    CANCELLED: 'cancelled'
+};
+
+// 상태별 한글 텍스트 및 아이콘
+const STATUS_TEXT = {
+    [ReservationStatus.PENDING]: { text: '대기중', icon: 'fas fa-clock', color: 'warning' },
+    [ReservationStatus.APPROVED]: { text: '승인됨', icon: 'fas fa-check', color: 'info' },
+    [ReservationStatus.IN_USE]: { text: '사용중', icon: 'fas fa-play', color: 'primary' },
+    [ReservationStatus.COMPLETED]: { text: '완료됨', icon: 'fas fa-flag-checkered', color: 'success' },
+    [ReservationStatus.REJECTED]: { text: '거절됨', icon: 'fas fa-times', color: 'danger' },
+    [ReservationStatus.CANCELLED]: { text: '취소됨', icon: 'fas fa-ban', color: 'secondary' }
+};
+
+// 상태 옵션 업데이트
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    statusFilter.innerHTML = `
+        <option value="">전체</option>
+        ${Object.entries(ReservationStatus).map(([key, value]) => `
+            <option value="${value}">${STATUS_TEXT[value].text}</option>
+        `).join('')}
+    `;
+});
 
 // 페이지 초기화
 function initializePage() {
@@ -153,95 +251,242 @@ function initializePage() {
     loadReservations();
 }
 
-// 상태별 한글 텍스트
-const statusText = {
-    'PENDING': '대기중',
-    'APPROVED': '승인됨',
-    'IN_USE': '사용중',
-    'COMPLETED': '완료',
-    'REJECTED': '거절됨',
-    'CANCELLED': '취소됨'
-};
+// 상태 텍스트 가져오기
+function getStatusText(status) {
+    return STATUS_TEXT[status]?.text || '알 수 없음';
+}
+
+// 상태 아이콘 가져오기
+function getStatusIcon(status) {
+    return STATUS_TEXT[status]?.icon || 'fas fa-question';
+}
+
+// 상태 색상 가져오기
+function getStatusColor(status) {
+    return STATUS_TEXT[status]?.color || 'secondary';
+}
+
+// 상태 배지 HTML 생성
+function getStatusBadgeHtml(status) {
+    if (!status) return `
+        <span class="status-badge bg-secondary text-white">
+            <i class="fas fa-question me-1"></i>알 수 없음
+        </span>
+    `;
+
+    const statusInfo = STATUS_TEXT[status];
+    if (!statusInfo) return `
+        <span class="status-badge bg-secondary text-white">
+            <i class="fas fa-question me-1"></i>${status}
+        </span>
+    `;
+
+    return `
+        <span class="status-badge bg-${statusInfo.color} text-${statusInfo.color === 'warning' ? 'dark' : 'white'}">
+            <i class="${statusInfo.icon} me-1"></i>
+            ${statusInfo.text}
+        </span>
+    `;
+}
 
 // 예약 목록 로드
 async function loadReservations() {
     try {
         const status = document.getElementById('statusFilter').value;
-        const url = `/api/admin/reservations${status ? `?status=${status}` : ''}`;
-        const response = await fetch(url);
+        let url = '/api/admin/reservations';
+        
+        // 상태 필터가 있는 경우에만 쿼리 파라미터 추가
+        if (status) {
+            url += `?status=${encodeURIComponent(status.toLowerCase())}`;
+        }
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include'
+        });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 422) {
+                throw new Error('지원하지 않는 상태 필터입니다.');
+            }
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `서버 오류가 발생했습니다. (${response.status})`);
         }
         
         const reservations = await response.json();
-        const tableBody = document.getElementById('reservationTableBody');
-        
-        if (reservations.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="9" class="text-center py-4">
-                        <p class="text-muted mb-0">신청 내역이 없습니다.</p>
-                    </td>
-                </tr>
-            `;
-            return;
+        if (!Array.isArray(reservations)) {
+            throw new Error('서버에서 잘못된 데이터 형식을 반환했습니다.');
         }
-
-        tableBody.innerHTML = reservations.map(reservation => `
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <span class="fw-medium">${reservation.user.full_name}</span>
-                        <span class="badge bg-secondary">${reservation.user.position || ''}</span>
-                    </div>
-                    <div class="small text-muted">${reservation.user.email}</div>
-                </td>
-                <td>
-                    <div class="platform-info">
-                        <img src="${reservation.account.platform.logo || '/static/img/default-platform.png'}" 
-                             alt="${reservation.account.platform.name}"
-                             class="platform-logo">
-                        <span>${reservation.account.platform.name}</span>
-                    </div>
-                </td>
-                <td>${reservation.account.email}</td>
-                <td>${new Date(reservation.start_date).toLocaleDateString()}</td>
-                <td>${new Date(reservation.end_date).toLocaleDateString()}</td>
-                <td>
-                    <span class="status-badge status-${reservation.status}">
-                        ${statusText[reservation.status]}
-                    </span>
-                </td>
-                <td>
-                    <span class="text-muted small">
-                        ${reservation.memo || '-'}
-                    </span>
-                </td>
-                <td>
-                    <span class="text-muted small">
-                        ${new Date(reservation.created_at).toLocaleString()}
-                    </span>
-                </td>
-                <td>
-                    ${reservation.status === 'PENDING' ? `
-                        <button class="btn btn-sm btn-outline-primary" 
-                                onclick="showStatusModal(${reservation.id})">
-                            처리하기
-                        </button>
-                    ` : '-'}
-                </td>
-            </tr>
-        `).join('');
+        
+        // 데스크톱 뷰 업데이트
+        updateDesktopView(reservations);
+        
+        // 모바일 뷰 업데이트
+        updateMobileView(reservations);
     } catch (error) {
         console.error('예약 목록 로드 실패:', error);
         if (error.message.includes('401')) {
             alert('세션이 만료되었습니다. 다시 로그인해주세요.');
             window.location.href = '/login';
         } else {
-            alert('예약 목록을 불러오는데 실패했습니다.');
+            alert(error.message);
+            // 오류 발생 시 필터 초기화
+            document.getElementById('statusFilter').value = '';
         }
     }
+}
+
+// 데스크톱 뷰 업데이트
+function updateDesktopView(reservations) {
+    const tableBody = document.getElementById('reservationTableBody');
+    
+    if (reservations.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    <p class="text-muted mb-0">신청 내역이 없습니다.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = reservations.map(reservation => `
+        <tr>
+            <td>
+                <div class="user-info">
+                    <span class="fw-medium">${escapeHtml(reservation.user.full_name)}</span>
+                    <span class="badge bg-secondary">${escapeHtml(reservation.user.position || '')}</span>
+                    <span class="small text-muted">${escapeHtml(reservation.user.email)}</span>
+                </div>
+            </td>
+            <td>
+                <div class="platform-info">
+                    <img src="${reservation.account.platform.logo || '/static/img/default-platform.png'}" 
+                         alt="${escapeHtml(reservation.account.platform.name)}"
+                         class="platform-logo">
+                    <span>${escapeHtml(reservation.account.platform.name)}</span>
+                </div>
+            </td>
+            <td>${escapeHtml(reservation.account.email)}</td>
+            <td>${new Date(reservation.start_date).toLocaleDateString()}</td>
+            <td>${new Date(reservation.end_date).toLocaleDateString()}</td>
+            <td>
+                ${getStatusBadgeHtml(reservation.status)}
+            </td>
+            <td>
+                <span class="text-muted small">
+                    ${escapeHtml(reservation.memo || '-')}
+                </span>
+            </td>
+            <td>
+                <span class="text-muted small">
+                    ${new Date(reservation.created_at).toLocaleString()}
+                </span>
+            </td>
+            <td>
+                ${reservation.status === 'PENDING' ? `
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="showStatusModal(${reservation.id})">
+                        처리하기
+                    </button>
+                ` : '-'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// 모바일 뷰 업데이트
+function updateMobileView(reservations) {
+    const cardList = document.getElementById('reservationCardList');
+    
+    if (reservations.length === 0) {
+        cardList.innerHTML = `
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">신청 내역이 없습니다.</p>
+            </div>
+        `;
+        return;
+    }
+
+    cardList.innerHTML = reservations.map(reservation => `
+        <div class="reservation-card">
+            <div class="info-row">
+                <span class="info-label">신청자</span>
+                <div class="info-value">
+                    <div class="user-info">
+                        <span class="fw-medium">${escapeHtml(reservation.user.full_name)}</span>
+                        <span class="badge bg-secondary">${escapeHtml(reservation.user.position || '')}</span>
+                        <span class="small text-muted">${escapeHtml(reservation.user.email)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">플랫폼</span>
+                <div class="info-value">
+                    <div class="platform-info">
+                        <img src="${reservation.account.platform.logo || '/static/img/default-platform.png'}" 
+                             alt="${escapeHtml(reservation.account.platform.name)}"
+                             class="platform-logo">
+                        <span>${escapeHtml(reservation.account.platform.name)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">계정</span>
+                <div class="info-value">${escapeHtml(reservation.account.email)}</div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">기간</span>
+                <div class="info-value">
+                    ${new Date(reservation.start_date).toLocaleDateString()} ~ 
+                    ${new Date(reservation.end_date).toLocaleDateString()}
+                </div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">상태</span>
+                <div class="info-value">
+                    ${getStatusBadgeHtml(reservation.status)}
+                </div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">메모</span>
+                <div class="info-value text-muted">
+                    ${escapeHtml(reservation.memo || '-')}
+                </div>
+            </div>
+            <div class="info-row">
+                <span class="info-label">신청일</span>
+                <div class="info-value text-muted">
+                    ${new Date(reservation.created_at).toLocaleString()}
+                </div>
+            </div>
+            ${reservation.status === 'PENDING' ? `
+                <div class="actions">
+                    <button class="btn btn-outline-primary w-100" 
+                            onclick="showStatusModal(${reservation.id})">
+                        처리하기
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+// HTML 이스케이프 함수 추가
+function escapeHtml(unsafe) {
+    if (unsafe == null) return '';
+    return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // 상태 변경 모달 표시
@@ -254,6 +499,49 @@ function showStatusModal(reservationId) {
     statusChangeModal.show();
 }
 
+// 상태 업데이트
+async function updateStatus(newStatus) {
+    const validStatus = Object.values(ReservationStatus).includes(newStatus.toLowerCase());
+    if (!validStatus) {
+        alert('잘못된 상태값입니다.');
+        return;
+    }
+
+    const memo = document.getElementById('statusMemo').value;
+    const accountPassword = document.getElementById('accountPassword').value;
+    
+    try {
+        const response = await fetch(`/api/admin/reservations/${selectedReservationId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{request.cookies.get("csrf_token")}}'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                status: newStatus.toLowerCase(),
+                memo: memo || null,
+                account_password: newStatus.toLowerCase() === ReservationStatus.APPROVED ? accountPassword : null
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `상태 변경에 실패했습니다. (${response.status})`);
+        }
+        
+        statusChangeModal.hide();
+        await loadReservations();
+        
+        const statusInfo = STATUS_TEXT[newStatus.toLowerCase()];
+        alert(`신청이 ${statusInfo.text}(으)로 처리되었습니다.`);
+    } catch (error) {
+        console.error('상태 변경 실패:', error);
+        alert(error.message);
+    }
+}
+
 // 승인 처리
 async function approveReservation() {
     const passwordField = document.getElementById('accountPassword');
@@ -262,44 +550,12 @@ async function approveReservation() {
         passwordField.focus();
         return;
     }
-    await updateStatus('APPROVED');
+    await updateStatus(ReservationStatus.APPROVED);
 }
 
 // 거절 처리
 async function rejectReservation() {
-    await updateStatus('REJECTED');
-}
-
-// 상태 업데이트
-async function updateStatus(newStatus) {
-    const memo = document.getElementById('statusMemo').value;
-    const accountPassword = document.getElementById('accountPassword').value;
-    
-    try {
-        const response = await fetch(`/api/admin/reservations/${selectedReservationId}/status`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                status: newStatus,
-                memo: memo || null,
-                account_password: newStatus === 'APPROVED' ? accountPassword : null
-            })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-        }
-        
-        statusChangeModal.hide();
-        await loadReservations();
-        alert(newStatus === 'APPROVED' ? '승인되었습니다.' : '거절되었습니다.');
-    } catch (error) {
-        console.error('상태 변경 실패:', error);
-        alert(`상태 변경에 실패했습니다: ${error.message}`);
-    }
+    await updateStatus(ReservationStatus.REJECTED);
 }
 
 // 목록 새로고침

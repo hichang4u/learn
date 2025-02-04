@@ -1,10 +1,16 @@
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 
-from app.dependencies import get_db, admin_required
-from app.models import User, Reservation, ReservationStatus
-from app.schemas.reservation import ReservationResponse, ReservationStatusUpdate
+from app.core.database import get_db
+from app.models import User, Reservation
+from app.models.enums import ReservationStatus
+from app.core.auth import get_current_active_user
+from app.schemas import ReservationResponse
+
+from app.dependencies import admin_required
+from app.schemas.reservation import ReservationStatusUpdate
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
